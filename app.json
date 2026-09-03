@@ -1,0 +1,259 @@
+{
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
+  "id": "fi.oh2th.energy-allocator",
+  "version": "1.0.0",
+  "compatibility": ">=13.0.0",
+  "sdk": 3,
+  "runtime": "nodejs",
+  "brandColor": "#3B7A57",
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Energy Allocator"
+  },
+  "description": {
+    "en": "Estimate the split of grid, solar, and battery energy a device consumes."
+  },
+  "category": [
+    "energy"
+  ],
+  "permissions": [
+    "homey:manager:api"
+  ],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Tapio Heiskanen",
+    "email": "oh2th@iki.fi"
+  },
+  "flow": {
+    "triggers": [
+      {
+        "id": "grid_share_changed",
+        "title": {
+          "en": "Grid share changed"
+        },
+        "hint": {
+          "en": "Fires when the smoothed grid share moves by more than the configured number of percentage points."
+        },
+        "tokens": [
+          {
+            "name": "grid_share",
+            "type": "number",
+            "title": {
+              "en": "Grid share (%)"
+            },
+            "example": 42
+          },
+          {
+            "name": "self_sufficiency",
+            "type": "number",
+            "title": {
+              "en": "Self-sufficiency (%)"
+            },
+            "example": 58
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=device-allocation"
+          }
+        ]
+      }
+    ],
+    "conditions": [
+      {
+        "id": "grid_share_above",
+        "title": {
+          "en": "Grid share !{{is|isn't}} above"
+        },
+        "titleFormatted": {
+          "en": "Grid share !{{is|isn't}} above [[percent]] %"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=device-allocation"
+          },
+          {
+            "type": "number",
+            "name": "percent",
+            "min": 0,
+            "max": 100,
+            "step": 1,
+            "placeholder": {
+              "en": "50"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "drivers": [
+    {
+      "name": {
+        "en": "Device Energy Allocation"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "meter_power.grid",
+        "meter_power.pv",
+        "meter_power.bat",
+        "th_grid_share",
+        "th_self_sufficiency",
+        "button.reset_meter"
+      ],
+      "capabilitiesOptions": {
+        "meter_power.grid": {
+          "title": {
+            "en": "Grid energy"
+          }
+        },
+        "meter_power.pv": {
+          "title": {
+            "en": "Solar energy"
+          }
+        },
+        "meter_power.bat": {
+          "title": {
+            "en": "Battery energy"
+          }
+        },
+        "button.reset_meter": {
+          "maintenanceAction": true,
+          "title": {
+            "en": "Reset allocation meters"
+          },
+          "desc": {
+            "en": "Set the grid, solar and battery energy counters back to zero."
+          }
+        }
+      },
+      "platforms": [
+        "local"
+      ],
+      "images": {
+        "small": "/drivers/device-allocation/assets/images/small.png",
+        "large": "/drivers/device-allocation/assets/images/large.png",
+        "xlarge": "/drivers/device-allocation/assets/images/xlarge.png"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "id": "device-allocation"
+    },
+    {
+      "name": {
+        "en": "Whole House Energy Allocation"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "meter_power.grid",
+        "meter_power.pv",
+        "meter_power.bat",
+        "th_grid_share",
+        "th_self_sufficiency",
+        "button.reset_meter"
+      ],
+      "capabilitiesOptions": {
+        "meter_power.grid": {
+          "title": {
+            "en": "Grid energy"
+          }
+        },
+        "meter_power.pv": {
+          "title": {
+            "en": "Solar energy"
+          }
+        },
+        "meter_power.bat": {
+          "title": {
+            "en": "Battery energy"
+          }
+        },
+        "button.reset_meter": {
+          "maintenanceAction": true,
+          "title": {
+            "en": "Reset allocation meters"
+          },
+          "desc": {
+            "en": "Set the grid, solar and battery energy counters back to zero."
+          }
+        }
+      },
+      "platforms": [
+        "local"
+      ],
+      "images": {
+        "small": "/drivers/house-allocation/assets/images/small.png",
+        "large": "/drivers/house-allocation/assets/images/large.png",
+        "xlarge": "/drivers/house-allocation/assets/images/xlarge.png"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "id": "house-allocation"
+    }
+  ],
+  "capabilities": {
+    "th_grid_share": {
+      "type": "number",
+      "title": {
+        "en": "Grid share"
+      },
+      "uiComponent": "sensor",
+      "getable": true,
+      "setable": false,
+      "units": {
+        "en": "%"
+      },
+      "decimals": 1,
+      "min": 0,
+      "max": 100,
+      "icon": "/assets/th_grid_share.svg"
+    },
+    "th_self_sufficiency": {
+      "type": "number",
+      "title": {
+        "en": "Self-sufficiency"
+      },
+      "uiComponent": "sensor",
+      "getable": true,
+      "setable": false,
+      "units": {
+        "en": "%"
+      },
+      "decimals": 1,
+      "min": 0,
+      "max": 100,
+      "icon": "/assets/th_self_sufficiency.svg"
+    }
+  }
+}

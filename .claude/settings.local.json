@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:apps.developer.homey.app)",
+      "Bash(node -e ' *)",
+      "Bash(grep -iA1 \"getDevice\\\\|:: GET\")"
+    ]
+  }
+}

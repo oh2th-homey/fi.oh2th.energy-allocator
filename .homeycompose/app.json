@@ -1,0 +1,32 @@
+{
+  "id": "fi.oh2th.energy-allocator",
+  "version": "1.0.0",
+  "compatibility": ">=13.0.0",
+  "sdk": 3,
+  "runtime": "nodejs",
+  "brandColor": "#3B7A57",
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Energy Allocator"
+  },
+  "description": {
+    "en": "Estimate the split of grid, solar, and battery energy a device consumes."
+  },
+  "category": [
+    "energy"
+  ],
+  "permissions": [
+    "homey:manager:api"
+  ],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Tapio Heiskanen",
+    "email": "oh2th@iki.fi"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "name": {
+    "en": "Device Energy Allocation"
+  },
+  "class": "sensor",
+  "capabilities": [
+    "meter_power.grid",
+    "meter_power.pv",
+    "meter_power.bat",
+    "th_grid_share",
+    "th_self_sufficiency",
+    "button.reset_meter"
+  ],
+  "capabilitiesOptions": {
+    "meter_power.grid": {
+      "title": {
+        "en": "Grid energy"
+      }
+    },
+    "meter_power.pv": {
+      "title": {
+        "en": "Solar energy"
+      }
+    },
+    "meter_power.bat": {
+      "title": {
+        "en": "Battery energy"
+      }
+    },
+    "button.reset_meter": {
+      "maintenanceAction": true,
+      "title": {
+        "en": "Reset allocation meters"
+      },
+      "desc": {
+        "en": "Set the grid, solar and battery energy counters back to zero."
+      }
+    }
+  },
+  "platforms": [
+    "local"
+  ],
+  "images": {
+    "small": "/drivers/device-allocation/assets/images/small.png",
+    "large": "/drivers/device-allocation/assets/images/large.png",
+    "xlarge": "/drivers/device-allocation/assets/images/xlarge.png"
+  },
+  "pair": [
+    {
+      "id": "list_devices",
+      "template": "list_devices",
+      "navigation": {
+        "next": "add_devices"
+      }
+    },
+    {
+      "id": "add_devices",
+      "template": "add_devices"
+    }
+  ]
+}

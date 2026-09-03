@@ -1,0 +1,54 @@
+{
+  "triggers": [
+    {
+      "id": "grid_share_changed",
+      "title": {
+        "en": "Grid share changed"
+      },
+      "hint": {
+        "en": "Fires when the smoothed grid share moves by more than the configured number of percentage points."
+      },
+      "tokens": [
+        {
+          "name": "grid_share",
+          "type": "number",
+          "title": {
+            "en": "Grid share (%)"
+          },
+          "example": 42
+        },
+        {
+          "name": "self_sufficiency",
+          "type": "number",
+          "title": {
+            "en": "Self-sufficiency (%)"
+          },
+          "example": 58
+        }
+      ]
+    }
+  ],
+  "conditions": [
+    {
+      "id": "grid_share_above",
+      "title": {
+        "en": "Grid share !{{is|isn't}} above"
+      },
+      "titleFormatted": {
+        "en": "Grid share !{{is|isn't}} above [[percent]] %"
+      },
+      "args": [
+        {
+          "type": "number",
+          "name": "percent",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "placeholder": {
+            "en": "50"
+          }
+        }
+      ]
+    }
+  ]
+}

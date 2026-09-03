@@ -1,0 +1,3 @@
+Your home pulls energy from several places at the same time - the grid, your solar panels and a home battery - and every appliance quietly consumes a mix of all of them. Energy Allocator uses the energy meters you already have to estimate that mix, so you can finally see where a device's kilowatt-hours actually came from.
+
+Choose your grid, solar and battery meters once, then pick the devices you want to follow. Energy Allocator keeps comparing their meter readings and splits each device's consumption into grid, solar and battery energy, and shows how large the grid share is and how self-sufficient that device really runs. A whole-home figure is available too, for the complete picture of your household.

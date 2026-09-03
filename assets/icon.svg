@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000">
+  <!-- sun (top) -->
+  <circle cx="12" cy="6.5" r="2.15"/>
+  <g stroke="#000" stroke-width="0.95" stroke-linecap="round">
+    <line x1="12" y1="2.7" x2="12" y2="3.7"/>
+    <line x1="12" y1="9.3" x2="12" y2="10.3"/>
+    <line x1="8.2" y1="6.5" x2="9.2" y2="6.5"/>
+    <line x1="14.8" y1="6.5" x2="15.8" y2="6.5"/>
+    <line x1="9.35" y1="3.85" x2="10.05" y2="4.55"/>
+    <line x1="13.95" y1="8.45" x2="14.65" y2="9.15"/>
+    <line x1="14.65" y1="3.85" x2="13.95" y2="4.55"/>
+    <line x1="10.05" y1="8.45" x2="9.35" y2="9.15"/>
+  </g>
+
+  <!-- grid pylon (bottom-left) -->
+  <path d="M7 11.3 4.1 17.8H5.75L7 15 8.25 17.8H9.9Z"/>
+  <rect x="3.8" y="11.85" width="6.4" height="1.05"/>
+  <rect x="4.75" y="13.75" width="4.5" height="0.95"/>
+
+  <!-- battery (bottom-right) -->
+  <rect x="14.95" y="11.15" width="1.6" height="1.25"/>
+  <rect x="17.55" y="11.15" width="1.6" height="1.25"/>
+  <rect x="13.9" y="12.5" width="6.3" height="5.7" rx="0.9" fill="none" stroke="#000" stroke-width="1.05"/>
+  <path d="M17.5 13.4 15.55 16H16.85L16.3 18.05 18.55 15.2H17.05Z"/>
+</svg>
