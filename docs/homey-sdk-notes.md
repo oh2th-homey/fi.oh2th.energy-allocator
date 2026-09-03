@@ -12,7 +12,7 @@ Sources:
 
 ## Toolchain (this machine)
 
-- `homey` CLI 4.4.3 at `/usr/bin/homey`; logged in as oh2th@iki.fi.
+- `homey` CLI 4.4.3 at `/usr/bin/homey`.
 - `homey app validate` works offline. `homey app run` needs a Homey on the LAN.
 - Node 24. SDK apps are **plain JavaScript** (no TypeScript build); `@types/homey`
   is only editor tooling.
@@ -61,6 +61,7 @@ Sources:
   validated at `publish` level **without** an `energy` object (confirmed here).
 - **Maintenance action**: add a `button.<name>` capability and configure it in
   `capabilitiesOptions`:
+
   ```json
   "button.reset_meter": {
     "maintenanceAction": true,
@@ -68,17 +69,20 @@ Sources:
     "desc": { "en": "…" }
   }
   ```
+
   Handle with `this.registerCapabilityListener('button.reset_meter', async () => { … })`.
 
 ## node-homey-api (`homey-api` npm package)
 
 - Needs the `homey:manager:api` permission (flagged for stricter App Store review).
+
 - ```js
-  const { HomeyAPI } = require('homey-api');
+  const { HomeyAPI } = require("homey-api");
   this.homeyApi = await HomeyAPI.createAppAPI({ homey: this.homey });
-  const devices = await this.homeyApi.devices.getDevices();      // { [id]: Device }
-  const one = await this.homeyApi.devices.getDevice({ id });     // pass `{ id }`
+  const devices = await this.homeyApi.devices.getDevices(); // { [id]: Device }
+  const one = await this.homeyApi.devices.getDevice({ id }); // pass `{ id }`
   ```
+
 - `Device` shape: `.id`, `.name`, `.zoneName`, `.driverId`, `.capabilities`
   (array of ids incl. sub-caps), `.capabilitiesObj[capId] = { value, lastUpdated, title, … }`.
 - Read a value: `device.capabilitiesObj?.[capId]?.value`.
@@ -89,6 +93,7 @@ Sources:
 
 - `/api.js` exports an **object** of async handlers; the function name maps to
   `<method><Name>` → `METHOD /name` (first letter of the remainder lower-cased):
+
   ```js
   module.exports = {
     async getMeterDevices({ homey }) { return homey.app.getMeterDevices(); }, // GET /meterDevices
@@ -96,9 +101,11 @@ Sources:
     async putConfig({ homey, body }) { … },                                    // PUT /config
   };
   ```
+
   Handler arg: `{ homey, params, query, body }`; reach the app via `homey.app`.
   Verb prefixes: `get`→GET, `post`/`add`/`create`→POST, `put`/`update`→PUT,
   `delete`→DELETE. Avoid `set*` (not a recognised verb) — used `putConfig` here.
+
 - Settings page (`settings/index.html`): `onHomeyReady(Homey)` → `Homey.ready()`,
   then `Homey.api('GET'|'PUT'|…, '/path', body|null, (err, result) => {})`.
   `Homey.get(key, cb)` / `Homey.set(key, value, cb)` read/write ManagerSettings.
@@ -110,12 +117,14 @@ Sources:
 
 - `driver.compose.json` `"pair"`: array of views. For "pick an existing device"
   use the built-in templates:
+
   ```json
   "pair": [
     { "id": "list_devices", "template": "list_devices", "navigation": { "next": "add_devices" } },
     { "id": "add_devices", "template": "add_devices" }
   ]
   ```
+
 - `list_devices` calls `Driver.onPairListDevices()` → return
   `[{ name, data: { …unique immutable id… } }]`. Put the monitored device id in
   `data` so the same device can't be added twice.
