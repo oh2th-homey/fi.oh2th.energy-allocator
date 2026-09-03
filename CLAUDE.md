@@ -181,7 +181,19 @@ them to that driver. The `house-allocation` device has no custom Flow cards yet
 - `lib/AllocationDevice.js` — shared device behaviour; subclassed by both drivers,
   which only differ in `getMonitoredDeviceId()`.
 - `settings/index.html` — source configuration UI.
-- `tools/make-assets.js` (`npm run assets`) — regenerates placeholder PNGs.
+- `tools/make-assets.js` — generates selected driver PNG assets.
+
+### Asset generation safety
+
+- **Never run `tools/make-assets.js` or `npm run assets` automatically.** It writes
+  binary imagery and can irreversibly overwrite artwork.
+- Run it only when the user explicitly asks to regenerate PNG assets and names the
+  intended driver/image target. Never run it as validation, setup, formatting, or
+  after changing unrelated code.
+- Before running it, confirm the invoked mode writes only the user-requested image
+  paths. Do not regenerate app imagery or another driver's imagery as a side effect.
+- SVG icons are hand-authored assets; do not generate, overwrite, or replace them
+  through `make-assets.js`.
 
 ### Known v1 limitations / TODO
 
