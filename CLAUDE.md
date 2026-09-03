@@ -193,6 +193,29 @@ them to that driver. The `house-allocation` device has no custom Flow cards yet
 - Placeholder art (`assets/`, `drivers/*/assets/`) — black-on-transparent bar/pie
   motifs; replace before publishing.
 
+### Review findings (for future agent work)
+
+Status: strong v1 architecture, but not yet fully hardened for every runtime edge case.
+
+- Strengths
+  - The core allocation model in `lib/allocation.js` is clear, conservative, and aligns well with Homey meter semantics.
+  - Counter reset detection in `app.js` is a real strength; skipping inconsistent intervals is preferable to inventing energy.
+  - `lib/AllocationDevice.js` keeps shared behavior clean and extensible for future power-breakdown capabilities.
+  - Share smoothing in `lib/SmoothingWindow.js` is an appropriate design for UI/Flow stability.
+
+- Risks / follow-ups
+  - First-interval distortion: if a monitored device is registered after app startup, it may not have a proper baseline yet. Check the `baselines` setup in `app.js` before treating a new monitored device as an established source.
+  - Interval loss: intentionally dropped intervals can slightly under-count cumulative totals over long runs. This is acceptable per the design, but it should remain explicit and not be treated as a bug in normal operation.
+  - Test coverage: the allocation logic is subtle and should be covered by unit tests, especially for export precedence, charge precedence, impossible balance conditions, and reset handling.
+  - Config validation: `settings/index.html` should reject duplicate mappings and more obviously invalid capability combinations before save.
+  - Startup timing: the sampler starts after a short delay; ensure startup and new-device registration cannot generate a false initial spike.
+
+- Recommended next tasks
+  1. Add unit tests around `computeHouseSplit()` and `attribute()`.
+  2. Harden initial baselining for newly created monitored devices and startup devices.
+  3. Strengthen settings validation before persisting config.
+  4. Keep the intentional “skip bad intervals” behavior documented and do not silently treat it as a correctness bug.
+
 ### Dependencies / permissions (done)
 
 - `homey-api` dependency added; `homey:manager:api` permission set;
