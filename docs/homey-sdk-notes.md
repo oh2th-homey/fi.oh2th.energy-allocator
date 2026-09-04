@@ -160,6 +160,19 @@ Sources:
   `this.homey.flow.getDeviceTriggerCard('<id>').trigger(device, tokens)`.
 - Condition: `this.homey.flow.getConditionCard('<id>').registerRunListener(async (args) => …)`
   — `args.device` is the Homey device, plus your own args.
+- **One device card for several drivers**: define it app-wide in
+  `.homeycompose/flow/{triggers,conditions}/<id>.json` and add the `device` arg
+  yourself with a multi-driver filter:
+  `{ "type": "device", "name": "device", "filter": "driver_id=drvA|drvB" }`
+  (`|` = OR in a filter value). Any card with a `device` arg is still a device
+  card — `getDeviceTriggerCard(id).trigger(device, tokens)` /
+  `getConditionCard(id).registerRunListener(…)`. Register a condition/action run
+  listener **once** app-wide (e.g. in `app.js`), not per-driver, or the second
+  registration overwrites the first.
+- **Don't build a "capability above X" condition card** — numeric capabilities
+  are exposed as Flow tokens, so Homey's built-in Logic condition
+  (`{{token}} > value`) already does it. Only add a custom condition where the
+  comparison isn't a plain token check.
 
 ## README / App Store
 

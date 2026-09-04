@@ -62,8 +62,8 @@ example, HomeWizard P1 uses `meter_power.consumed` and
 ### Capabilities
 
 - `meter_power.grid`, `meter_power.pv`, `meter_power.bat` — allocated energy
-- `th_grid_share` (%) — grid energy / total consumed.
-- `th_self_sufficiency` (%) — (solar + battery) energy / total consumed.
+- `measure_grid_share` (%) — grid energy / total consumed.
+- `measure_self_sufficiency` (%) — (solar + battery) energy / total consumed.
 - `button.reset_meter` — maintenance action to reset the allocation counters.
 
 ## Author

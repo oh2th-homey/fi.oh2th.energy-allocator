@@ -1,0 +1,33 @@
+{
+  "title": {
+    "en": "Energy share changed"
+  },
+  "hint": {
+    "en": "Trigger when the  energy share changes by more than the configured number of percentage points."
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=device-allocation|house-allocation"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "grid_share",
+      "type": "number",
+      "title": {
+        "en": "Grid share (%)"
+      },
+      "example": 42
+    },
+    {
+      "name": "self_sufficiency",
+      "type": "number",
+      "title": {
+        "en": "Self-sufficiency (%)"
+      },
+      "example": 58
+    }
+  ]
+}

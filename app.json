@@ -64,13 +64,19 @@
   "flow": {
     "triggers": [
       {
-        "id": "grid_share_changed",
         "title": {
-          "en": "Grid share changed"
+          "en": "Energy share changed"
         },
         "hint": {
-          "en": "Fires when the smoothed grid share moves by more than the configured number of percentage points."
+          "en": "Trigger when the  energy share changes by more than the configured number of percentage points."
         },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=device-allocation|house-allocation"
+          }
+        ],
         "tokens": [
           {
             "name": "grid_share",
@@ -89,41 +95,7 @@
             "example": 58
           }
         ],
-        "args": [
-          {
-            "type": "device",
-            "name": "device",
-            "filter": "driver_id=device-allocation"
-          }
-        ]
-      }
-    ],
-    "conditions": [
-      {
-        "id": "grid_share_above",
-        "title": {
-          "en": "Grid share !{{is|isn't}} above"
-        },
-        "titleFormatted": {
-          "en": "Grid share !{{is|isn't}} above [[percent]] %"
-        },
-        "args": [
-          {
-            "type": "device",
-            "name": "device",
-            "filter": "driver_id=device-allocation"
-          },
-          {
-            "type": "number",
-            "name": "percent",
-            "min": 0,
-            "max": 100,
-            "step": 1,
-            "placeholder": {
-              "en": "50"
-            }
-          }
-        ]
+        "id": "grid_share_changed"
       }
     ]
   },
@@ -135,8 +107,8 @@
       "class": "sensor",
       "capabilities": [
         "meter_power.grid",
-        "th_grid_share",
-        "th_self_sufficiency",
+        "measure_grid_share",
+        "measure_self_sufficiency",
         "button.reset_meter"
       ],
       "capabilitiesOptions": {
@@ -195,8 +167,8 @@
       "class": "sensor",
       "capabilities": [
         "meter_power.grid",
-        "th_grid_share",
-        "th_self_sufficiency",
+        "measure_grid_share",
+        "measure_self_sufficiency",
         "button.reset_meter"
       ],
       "capabilitiesOptions": {
@@ -250,7 +222,7 @@
     }
   ],
   "capabilities": {
-    "th_grid_share": {
+    "measure_grid_share": {
       "type": "number",
       "title": {
         "en": "Grid share"
@@ -264,9 +236,9 @@
       "decimals": 1,
       "min": 0,
       "max": 100,
-      "icon": "/assets/th_grid_share.svg"
+      "icon": "/assets/measure_grid_share.svg"
     },
-    "th_self_sufficiency": {
+    "measure_self_sufficiency": {
       "type": "number",
       "title": {
         "en": "Self-sufficiency"
@@ -280,7 +252,7 @@
       "decimals": 1,
       "min": 0,
       "max": 100,
-      "icon": "/assets/th_self_sufficiency.svg"
+      "icon": "/assets/measure_self_sufficiency.svg"
     }
   }
 }

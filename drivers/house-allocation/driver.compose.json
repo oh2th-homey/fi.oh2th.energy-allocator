@@ -5,8 +5,8 @@
   "class": "sensor",
   "capabilities": [
     "meter_power.grid",
-    "th_grid_share",
-    "th_self_sufficiency",
+    "measure_grid_share",
+    "measure_self_sufficiency",
     "button.reset_meter"
   ],
   "capabilitiesOptions": {

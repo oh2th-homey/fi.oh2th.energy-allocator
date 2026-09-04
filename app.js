@@ -12,11 +12,10 @@ const DEFAULT_CONFIG = {
   battery: [], // [{ deviceId, chargeCapability, dischargeCapability }]
   intervalSeconds: 60,
   smoothingMinutes: 5,
-  shareChangeThreshold: 5,
+  shareChangeThreshold: 5
 };
 
 module.exports = class EnergyAllocatorApp extends Homey.App {
-
   async onInit() {
     /** @type {Set<import('./lib/AllocationDevice')>} */
     this.consumers = new Set();
@@ -24,6 +23,7 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
     this.baselines = new Map();
     this.lastTickAt = null;
     this._sampleTimer = null;
+    this._initialSampleTimer = null;
 
     this.homeyApi = await HomeyAPI.createAppAPI({ homey: this.homey });
 
@@ -39,6 +39,7 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
 
   async onUninit() {
     if (this._sampleTimer) this.homey.clearInterval(this._sampleTimer);
+    if (this._initialSampleTimer) this.homey.clearTimeout(this._initialSampleTimer);
   }
 
   // ---------------------------------------------------------------------------
@@ -49,14 +50,14 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
     const stored = this.homey.settings.get(CONFIG_KEY);
     return {
       ...DEFAULT_CONFIG,
-      ...(stored && typeof stored === 'object' ? stored : {}),
+      ...(stored && typeof stored === 'object' ? stored : {})
     };
   }
 
   async setConfig(config) {
     const merged = {
       ...DEFAULT_CONFIG,
-      ...(config && typeof config === 'object' ? config : {}),
+      ...(config && typeof config === 'object' ? config : {})
     };
     merged.pv = Array.isArray(merged.pv) ? merged.pv : [];
     merged.battery = Array.isArray(merged.battery) ? merged.battery : [];
@@ -101,6 +102,10 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
       this.homey.clearInterval(this._sampleTimer);
       this._sampleTimer = null;
     }
+    if (this._initialSampleTimer) {
+      this.homey.clearTimeout(this._initialSampleTimer);
+      this._initialSampleTimer = null;
+    }
     this.baselines.clear();
     this.lastTickAt = null;
 
@@ -111,7 +116,8 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
       this.tick().catch((err) => this.error('sample tick failed:', err));
     }, intervalMs);
 
-    this.homey.setTimeout(() => {
+    this._initialSampleTimer = this.homey.setTimeout(() => {
+      this._initialSampleTimer = null;
       this.tick().catch((err) => this.error('initial sample tick failed:', err));
     }, 2500);
 
@@ -241,16 +247,14 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
         const monitored = monitoredReads.get(consumer);
         if (monitored) {
           const deviceDelta = delta.get(monitored.key) || 0;
-          const allocation = deviceDelta > 0
-            ? attribute(deviceDelta, split)
-            : { grid: 0, pv: 0, bat: 0, total: 0 };
+          const allocation = deviceDelta > 0 ? attribute(deviceDelta, split) : { grid: 0, pv: 0, bat: 0, total: 0 };
           await consumer.applyAllocation(allocation);
         } else {
           await consumer.applyAllocation({
             grid: split.houseGrid,
             pv: split.housePv,
             bat: split.houseBat,
-            total: split.houseTotal,
+            total: split.houseTotal
           });
         }
       } catch (err) {
@@ -272,10 +276,7 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
    * wired back in as a source (which would create an allocation loop).
    */
   async getMeterDevices() {
-    const [devices, zones] = await Promise.all([
-      this.homeyApi.devices.getDevices(),
-      this.homeyApi.zones.getZones().catch(() => ({})),
-    ]);
+    const [devices, zones] = await Promise.all([this.homeyApi.devices.getDevices(), this.homeyApi.zones.getZones().catch(() => ({}))]);
     const result = [];
     const ownAppUri = `homey:app:${this.homey.manifest.id}`;
 
@@ -283,11 +284,9 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
       // Never offer this app's own allocator devices as a source - selecting one
       // would feed an allocator's synthetic output back into the allocation and
       // create a loop.
-      if (device.ownerUri === ownAppUri
-        || String(device.driverId || '').startsWith(`${ownAppUri}:`)) continue;
+      if (device.ownerUri === ownAppUri || String(device.driverId || '').startsWith(`${ownAppUri}:`)) continue;
 
-      const meterCaps = (device.capabilities || [])
-        .filter((cap) => cap === 'meter_power' || cap.startsWith('meter_power.'));
+      const meterCaps = (device.capabilities || []).filter((cap) => cap === 'meter_power' || cap.startsWith('meter_power.'));
       if (meterCaps.length === 0) continue;
 
       result.push({
@@ -296,10 +295,8 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
         zone: (device.zone && zones[device.zone] && zones[device.zone].name) || null,
         capabilities: meterCaps.map((cap) => ({
           id: cap,
-          title: (device.capabilitiesObj
-            && device.capabilitiesObj[cap]
-            && device.capabilitiesObj[cap].title) || cap,
-        })),
+          title: (device.capabilitiesObj && device.capabilitiesObj[cap] && device.capabilitiesObj[cap].title) || cap
+        }))
       });
     }
 

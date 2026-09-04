@@ -38,7 +38,7 @@ exact capability handling).
 Outputs (per monitored device):
 
 - `meter_power.grid`, `meter_power.pv`, and (when battery configured) `meter_power.bat`
-- share capabilities (`th_grid_share`, `th_self_sufficiency`)
+- share capabilities (`measure_grid_share`, `measure_self_sufficiency`)
 
 Requires the `homey:manager:api` permission to enumerate and read other apps' devices.
 
@@ -68,10 +68,11 @@ cards. Only define custom capabilities where no standard one fits.
 - Meter reset uses a **standard maintenance-action** `button.reset_meter`
   (`maintenanceAction: true` in `capabilitiesOptions`), not a settings button.
 - Share values: no standard percentage capability exists, so two custom
-  capabilities under the author's reusable `th_` namespace (generic, no
-  app-specific wording, so other apps/devices can adopt them):
-  - `th_grid_share` — number, `%`, 0–100, `uiComponent: sensor`, own icon.
-  - `th_self_sufficiency` — same shape.
+  capabilities using the `measure_` prefix (instantaneous measurement, matching
+  Homey convention; generic names, no app-specific wording so other apps/devices
+  can adopt them):
+  - `measure_grid_share` — number, `%`, 0–100, `uiComponent: sensor`, own icon.
+  - `measure_self_sufficiency` — same shape.
 
 ## Method
 
@@ -136,7 +137,7 @@ picker is used to choose devices; for each role the user then maps the specific
 ### Capabilities
 
 Both drivers expose the same set:
-`meter_power.grid`, `th_grid_share`, `th_self_sufficiency`, `button.reset_meter`
+`meter_power.grid`, `measure_grid_share`, `measure_self_sufficiency`, `button.reset_meter`
 always, plus `meter_power.pv` / `meter_power.bat` **dynamically**. See "Capability
 strategy" above.
 
@@ -172,16 +173,22 @@ strategy" above.
   devices / capability mappings and the sampling numbers for the whole house.
 - Per-allocator-device override: **deferred** (not in v1). App-level only for now.
 
-### Flow cards (driver `device-allocation` only in v1)
+### Flow cards (shared by both drivers)
 
-Defined in `drivers/device-allocation/driver.flow.compose.json`, so Compose scopes
-them to that driver. The `house-allocation` device has no custom Flow cards yet
-(still gets Insights on every capability).
+Defined **app-wide** in `.homeycompose/flow/` (not per-driver), with a manual
+`device` arg whose `filter` is `driver_id=device-allocation|house-allocation` so
+the card offers devices from either driver. Still a device Flow card (any card
+with a `device` arg is), accessed via `getDeviceTriggerCard`.
 
-- Trigger **grid share changed** — fires when the smoothed grid share moves more
-  than `shareChangeThreshold` points since last fire; tokens `grid_share`,
-  `self_sufficiency`.
-- Condition **grid share is/isn't above [percent] %**.
+- `.homeycompose/flow/triggers/grid_share_changed.json` — **grid share changed**:
+  fires when the smoothed grid share moves more than `shareChangeThreshold` points
+  since last fire; tokens `grid_share`, `self_sufficiency`. Fired per device from
+  `lib/AllocationDevice._maybeTriggerShareChanged()`.
+
+No custom **condition** card: the `measure_grid_share` / `measure_self_sufficiency`
+capabilities are exposed as tokens, so Homey's standard Logic condition card
+(`{{measure_grid_share}} > 50`) already covers "grid share above X" without a
+purpose-built card.
 
 ## Build layout
 
