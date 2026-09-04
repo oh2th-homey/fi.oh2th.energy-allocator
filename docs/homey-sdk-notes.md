@@ -41,8 +41,6 @@ Sources:
 - App images PNG: 250×175 / 500×350 / 1000×700.
 - Driver images PNG: 75×75 / 500×500 / 1000×1000.
 - Custom capabilities with `uiComponent: "sensor"` need an `icon` (SVG path).
-- No imagemagick/sharp here — `tools/make-assets.js` writes placeholder PNGs with
-  a hand-rolled zlib PNG encoder (`npm run assets`).
 
 ## Capabilities
 
