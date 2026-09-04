@@ -1,25 +1,19 @@
 {
   "id": "fi.oh2th.energy-allocator",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "compatibility": ">=13.0.0",
   "sdk": 3,
   "runtime": "nodejs",
   "brandColor": "#3B7A57",
-  "platforms": [
-    "local"
-  ],
+  "platforms": ["local"],
   "name": {
     "en": "Energy Allocator"
   },
   "description": {
     "en": "Estimate the split of grid, solar, and battery energy a device consumes."
   },
-  "category": [
-    "energy"
-  ],
-  "permissions": [
-    "homey:manager:api"
-  ],
+  "category": ["energy"],
+  "permissions": ["homey:manager:api"],
   "api": {
     "getMeterDevices": {
       "method": "GET",
@@ -42,5 +36,22 @@
   "author": {
     "name": "Tapio Heiskanen",
     "email": "oh2th@iki.fi"
-  }
+  },
+  "contributing": {
+    "donate": {
+      "paypal": {
+        "username": "oh2th"
+      },
+      "githubSponsors": {
+        "username": "oh2th"
+      }
+    }
+  },
+  "source": "https://github.com/oh2th/fi.oh2th.energy-allocator",
+  "bugs": {
+    "url": "https://github.com/oh2th/fi.oh2th.energy-allocator/issues"
+  },
+  "homeyCommunityTopicId": 159148,
+  "support": "https://github.com/oh2th/fi.oh2th.energy-allocator/discussions/categories/general",
+  "homepage": "https://oh2th.fi/tapio/homey/"
 }
