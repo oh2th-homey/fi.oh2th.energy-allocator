@@ -1,19 +1,25 @@
 {
   "id": "fi.oh2th.energy-allocator",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "compatibility": ">=13.0.0",
   "sdk": 3,
   "runtime": "nodejs",
   "brandColor": "#3B7A57",
-  "platforms": ["local"],
+  "platforms": [
+    "local"
+  ],
   "name": {
     "en": "Energy Allocator"
   },
   "description": {
     "en": "Estimate the split of grid, solar, and battery energy a device consumes."
   },
-  "category": ["energy"],
-  "permissions": ["homey:manager:api"],
+  "category": [
+    "energy"
+  ],
+  "permissions": [
+    "homey:manager:api"
+  ],
   "api": {
     "getMeterDevices": {
       "method": "GET",
