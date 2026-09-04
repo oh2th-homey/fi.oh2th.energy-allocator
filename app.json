@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "fi.oh2th.energy-allocator",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "compatibility": ">=13.0.0",
   "sdk": 3,
   "runtime": "nodejs",
@@ -44,6 +44,23 @@
     "name": "Tapio Heiskanen",
     "email": "oh2th@iki.fi"
   },
+  "contributing": {
+    "donate": {
+      "paypal": {
+        "username": "oh2th"
+      },
+      "githubSponsors": {
+        "username": "oh2th"
+      }
+    }
+  },
+  "source": "https://github.com/oh2th/fi.oh2th.energy-allocator",
+  "bugs": {
+    "url": "https://github.com/oh2th/fi.oh2th.energy-allocator/issues"
+  },
+  "homeyCommunityTopicId": 159148,
+  "support": "https://github.com/oh2th/fi.oh2th.energy-allocator/discussions/categories/general",
+  "homepage": "https://oh2th.fi/tapio/homey/",
   "flow": {
     "triggers": [
       {
