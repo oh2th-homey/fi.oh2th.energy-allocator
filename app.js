@@ -28,7 +28,9 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
     this.homeyApi = await HomeyAPI.createAppAPI({ homey: this.homey });
 
     this.homey.settings.on('set', (key) => {
-      if (key === CONFIG_KEY) this.restartSampler('configuration changed');
+      if (key !== CONFIG_KEY) return;
+      this.restartSampler('configuration changed');
+      this.syncConsumerCapabilities();
     });
 
     this.restartSampler('startup');
@@ -61,6 +63,7 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
 
     this.homey.settings.set(CONFIG_KEY, merged);
     this.restartSampler('configuration saved');
+    this.syncConsumerCapabilities();
     return merged;
   }
 
@@ -74,6 +77,19 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
 
   unregisterConsumer(device) {
     this.consumers.delete(device);
+  }
+
+  /**
+   * Ask every allocator device to re-derive which dynamic capabilities
+   * (`meter_power.pv` / `meter_power.bat`) it should expose for the current
+   * source configuration.
+   */
+  syncConsumerCapabilities() {
+    for (const consumer of this.consumers) {
+      if (typeof consumer.onConfigChanged === 'function') {
+        consumer.onConfigChanged().catch((err) => this.error('capability sync failed:', err));
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -250,14 +266,26 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
   // ---------------------------------------------------------------------------
 
   /**
-   * All Homey devices that expose one or more `meter_power` capabilities,
-   * with the concrete capability ids the settings UI can map to source roles.
+   * All Homey devices that expose one or more `meter_power` capabilities, with
+   * the concrete capability ids the settings UI can map to source roles. This
+   * app's own allocator devices are excluded so their synthetic output can't be
+   * wired back in as a source (which would create an allocation loop).
    */
   async getMeterDevices() {
-    const devices = await this.homeyApi.devices.getDevices();
+    const [devices, zones] = await Promise.all([
+      this.homeyApi.devices.getDevices(),
+      this.homeyApi.zones.getZones().catch(() => ({})),
+    ]);
     const result = [];
+    const ownAppUri = `homey:app:${this.homey.manifest.id}`;
 
     for (const device of Object.values(devices)) {
+      // Never offer this app's own allocator devices as a source - selecting one
+      // would feed an allocator's synthetic output back into the allocation and
+      // create a loop.
+      if (device.ownerUri === ownAppUri
+        || String(device.driverId || '').startsWith(`${ownAppUri}:`)) continue;
+
       const meterCaps = (device.capabilities || [])
         .filter((cap) => cap === 'meter_power' || cap.startsWith('meter_power.'));
       if (meterCaps.length === 0) continue;
@@ -265,7 +293,7 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
       result.push({
         id: device.id,
         name: device.name,
-        zone: device.zoneName || null,
+        zone: (device.zone && zones[device.zone] && zones[device.zone].name) || null,
         capabilities: meterCaps.map((cap) => ({
           id: cap,
           title: (device.capabilitiesObj

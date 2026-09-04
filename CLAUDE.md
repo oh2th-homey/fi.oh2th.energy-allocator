@@ -129,16 +129,29 @@ picker is used to choose devices; for each role the user then maps the specific
 - Driver `device-allocation` ("Device Energy Allocation"): one device per
   monitored device (bound via the device picker), exposing
   `meter_power.grid/.pv/.bat` + share capabilities.
-- Driver `house-allocation` ("Whole House Energy Allocation"): one aggregate
+- Driver `house-allocation` ("House Energy Allocation"): one aggregate
   device representing ΔHouse from the energy balance (split into grid/pv/bat),
   independent of which loads are monitored.
 
 ### Capabilities
 
 Both drivers expose the same set:
-`meter_power.grid`, `meter_power.pv`, `meter_power.bat`, `th_grid_share`,
-`th_self_sufficiency`, `button.reset_meter`. See "Capability strategy" above.
+`meter_power.grid`, `th_grid_share`, `th_self_sufficiency`, `button.reset_meter`
+always, plus `meter_power.pv` / `meter_power.bat` **dynamically**. See "Capability
+strategy" above.
 
+- Grid is mandatory, so `meter_power.grid` + the shares + the reset button are
+  fixed in each `driver.compose.json` `capabilities` list.
+- `meter_power.pv` and `meter_power.bat` are **not** in the compose `capabilities`
+  list (only in `capabilitiesOptions`, so `addCapability` picks up the title).
+  `AllocationDevice._syncCapabilities()` adds `meter_power.pv` when the first solar
+  source is configured and removes it when the last one is deleted; same for
+  `meter_power.bat` vs. battery sources. `app.js` `syncConsumerCapabilities()`
+  drives this from every config change (`settings.on('set')` and `setConfig()`),
+  and each device also re-syncs in `onInit()`.
+- Re-adding a dynamic capability appends it after `button.reset_meter` in the UI
+  (Homey has no reorder API) — cosmetic only. Removing it also drops its stored
+  total and Insights history; a later re-add starts the counter from 0.
 - `measure_power.*` live breakdown may be added later — `lib/AllocationDevice.js`
   is structured so it can be.
 - Cumulative counters otherwise run forever like a real meter.
@@ -173,7 +186,11 @@ them to that driver. The `house-allocation` device has no custom Flow cards yet
 ## Build layout
 
 - `app.js` — `EnergyAllocatorApp`: holds config, the consumer registry, and the
-  sampling loop (`tick()`); exposes `getMeterDevices()` for the settings page.
+  sampling loop (`tick()`); exposes `getMeterDevices()` for the settings page and
+  `device-allocation` pairing. `getMeterDevices()` filters out this app's own
+  allocator devices (matched by `ownerUri` / `driverId` against
+  `homey:app:<manifest.id>`) so their synthetic `meter_power.*` output can't be
+  selected as a grid/PV/battery source or monitored — that would create a loop.
 - `api.js` — `getMeterDevices` / `getConfig` / `putConfig`.
 - `lib/allocation.js` — pure `computeHouseSplit()` + `attribute()` (unit-tested by
   eye; see the priority-drain algorithm).

@@ -81,29 +81,54 @@ Sources:
   const one = await this.homeyApi.devices.getDevice({ id }); // pass `{ id }`
   ```
 
-- `Device` shape: `.id`, `.name`, `.zoneName`, `.driverId`, `.capabilities`
+- `Device` shape: `.id`, `.name`, `.zone` (zone **id**), `.driverId`, `.capabilities`
   (array of ids incl. sub-caps), `.capabilitiesObj[capId] = { value, lastUpdated, title, … }`.
 - Read a value: `device.capabilitiesObj?.[capId]?.value`.
+- `Device.zoneName` is **deprecated in `homey-api` v3** and now returns `undefined`
+  (it logs `Device.zoneName is deprecated.` once per access). For a zone label,
+  fetch `await this.homeyApi.zones.getZones()` (`{ [id]: Zone }`) and look up
+  `zones[device.zone]?.name`. Same story for `Device.driverUri` → `.driverId`.
 - Polling `getDevices()` each interval is fine for slow meters; realtime events
   need `await api.devices.connect()` and capability instances.
 
 ## App API (`/api.js`) + settings page
 
-- `/api.js` exports an **object** of async handlers; the function name maps to
-  `<method><Name>` → `METHOD /name` (first letter of the remainder lower-cased):
+- **Routes MUST be declared in `.homeycompose/app.json` under an `"api"` object** —
+  Compose does NOT auto-generate this from `api.js`, and `homey app validate`
+  passes without it, but at runtime `homey app run` throws
+  `api.js found but no "api" section in app.json manifest` (ManagerApi
+  `_validateEndpoints`). Each entry is keyed by the handler name:
+
+  ```json
+  "api": {
+    "getMeterDevices": { "method": "GET", "path": "/meterDevices" },
+    "getConfig":       { "method": "GET", "path": "/config" },
+    "putConfig":       { "method": "PUT", "path": "/config" }
+  }
+  ```
+
+  `method` is `GET|POST|PUT|DELETE` (or an array); `path` is an explicit route
+  pattern (`/`, `/:id`, …) — it is NOT derived from the handler name. Optional
+  `"public": true` disables auth for that route (use sparingly).
+
+- `/api.js` exports an **object** of async handlers, one per key in the manifest
+  `api` object:
 
   ```js
   module.exports = {
-    async getMeterDevices({ homey }) { return homey.app.getMeterDevices(); }, // GET /meterDevices
-    async getConfig({ homey }) { … },                                          // GET /config
-    async putConfig({ homey, body }) { … },                                    // PUT /config
+    async getMeterDevices({ homey }) { return homey.app.getMeterDevices(); },
+    async getConfig({ homey }) { … },
+    async putConfig({ homey, body }) { … },
   };
   ```
 
-  Handler arg: `{ homey, params, query, body }`; reach the app via `homey.app`.
-  Verb prefixes: `get`→GET, `post`/`add`/`create`→POST, `put`/`update`→PUT,
-  `delete`→DELETE. Avoid `set*` (not a recognised verb) — used `putConfig` here.
+  Handler arg: `{ homey, params, query, body }` (JSON body auto-parsed); reach the
+  app via `homey.app`. Endpoints live at `/api/app/<app.id>/<path>`.
 
+- Settings page (`settings/index.html`) **must load the bridge script in `<head>`**:
+  `<script type="text/javascript" src="/homey.js" data-origin="settings"></script>`.
+  Without it `onHomeyReady` is never called, `Homey.ready()` never fires, and the
+  page stays stuck behind Homey's loading spinner (validates fine — runtime only).
 - Settings page (`settings/index.html`): `onHomeyReady(Homey)` → `Homey.ready()`,
   then `Homey.api('GET'|'PUT'|…, '/path', body|null, (err, result) => {})`.
   `Homey.get(key, cb)` / `Homey.set(key, value, cb)` read/write ManagerSettings.

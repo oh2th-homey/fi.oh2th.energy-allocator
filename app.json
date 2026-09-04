@@ -21,6 +21,20 @@
   "permissions": [
     "homey:manager:api"
   ],
+  "api": {
+    "getMeterDevices": {
+      "method": "GET",
+      "path": "/meterDevices"
+    },
+    "getConfig": {
+      "method": "GET",
+      "path": "/config"
+    },
+    "putConfig": {
+      "method": "PUT",
+      "path": "/config"
+    }
+  },
   "images": {
     "small": "/assets/images/small.png",
     "large": "/assets/images/large.png",
@@ -104,8 +118,6 @@
       "class": "sensor",
       "capabilities": [
         "meter_power.grid",
-        "meter_power.pv",
-        "meter_power.bat",
         "th_grid_share",
         "th_self_sufficiency",
         "button.reset_meter"
@@ -161,13 +173,11 @@
     },
     {
       "name": {
-        "en": "Whole House Energy Allocation"
+        "en": "House Energy Allocation"
       },
       "class": "sensor",
       "capabilities": [
         "meter_power.grid",
-        "meter_power.pv",
-        "meter_power.bat",
         "th_grid_share",
         "th_self_sufficiency",
         "button.reset_meter"

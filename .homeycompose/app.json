@@ -20,6 +20,20 @@
   "permissions": [
     "homey:manager:api"
   ],
+  "api": {
+    "getMeterDevices": {
+      "method": "GET",
+      "path": "/meterDevices"
+    },
+    "getConfig": {
+      "method": "GET",
+      "path": "/config"
+    },
+    "putConfig": {
+      "method": "PUT",
+      "path": "/config"
+    }
+  },
   "images": {
     "small": "/assets/images/small.png",
     "large": "/assets/images/large.png",

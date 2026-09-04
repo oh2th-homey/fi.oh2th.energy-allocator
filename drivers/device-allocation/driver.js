@@ -26,7 +26,7 @@ module.exports = class DeviceAllocationDriver extends Homey.Driver {
       .filter((device) => device.capabilities.some((cap) => cap.id === 'meter_power'))
       .filter((device) => !taken.has(device.id))
       .map((device) => ({
-        name: device.name,
+        name: `${device.name} allocation`,
         data: { deviceId: device.id },
       }));
   }

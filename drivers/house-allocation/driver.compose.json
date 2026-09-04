@@ -1,12 +1,10 @@
 {
   "name": {
-    "en": "Whole House Energy Allocation"
+    "en": "House Energy Allocation"
   },
   "class": "sensor",
   "capabilities": [
     "meter_power.grid",
-    "meter_power.pv",
-    "meter_power.bat",
     "th_grid_share",
     "th_self_sufficiency",
     "button.reset_meter"

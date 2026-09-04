@@ -12,7 +12,7 @@ module.exports = class HouseAllocationDriver extends Homey.Driver {
 
     return [
       {
-        name: 'Whole House Energy Allocation',
+        name: 'House Energy Allocation',
         data: { id: 'whole-house' },
       },
     ];
