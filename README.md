@@ -15,8 +15,8 @@ you already own.
 
 ## How it works
 
-On a timer (default ~60 s) the app samples the configured kWh counters and works
-with per-interval deltas. Each interval it solves the household energy balance
+Every 5 minutes the app samples the configured kWh counters and works with
+per-interval deltas. Each interval it solves the household energy balance
 
 ```text
 ΔPV + ΔGridImport + ΔBatDischarge  =  ΔHouse + ΔGridExport + ΔBatCharge
@@ -34,7 +34,7 @@ delta is then attributed in the same proportions and accumulated.
 counter (sources and monitored devices) keeps its own baseline; if any counter
 decreases, or the balance is inconsistent, or the sample gap is implausible, the
 whole interval is discarded and the baselines are re-synced. Reported shares are
-smoothed over a trailing ~5 minute window so dropped intervals are not visible.
+smoothed over the last 5 samples (25 minutes) so dropped intervals are not visible.
 
 ## Configuration
 
@@ -46,7 +46,9 @@ allocator device and defines the meters used for the whole home:
 - Add one or more PV devices and map each device's production-energy capability.
 - Add one or more battery or EV devices and map both the charge- and
   discharge-energy capabilities for each one.
-- Set the sampling interval, share smoothing period, and Flow trigger threshold.
+- Set the Flow trigger threshold (how far the grid share must move to fire the
+  "grid share changed" trigger). The 5-minute sample interval and 25-minute
+  smoothing window are fixed.
 
 Capability ids for import and export are not standardized across drivers (for
 example, HomeWizard P1 uses `meter_power.consumed` and
@@ -54,10 +56,10 @@ example, HomeWizard P1 uses `meter_power.consumed` and
 
 ## Devices
 
-| Driver              | Purpose                                                                           |
-| ------------------- | --------------------------------------------------------------------------------- |
-| `device-allocation` | One device per monitored device; per-device grid/solar/battery energy and shares. |
-| `house-allocation`  | One aggregate device for whole-home consumption (ΔHouse) from the energy balance. |
+| Driver              | Purpose                                                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| `device-allocation` | One allocator per monitored `meter_power(.x)` counter; per-counter grid/solar/battery energy and shares. |
+| `house-allocation`  | One aggregate device for whole-home consumption (ΔHouse) from the energy balance.                        |
 
 ### Capabilities
 

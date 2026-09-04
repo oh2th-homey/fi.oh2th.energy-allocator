@@ -14,7 +14,7 @@
     .ea-row .homey-form-group { margin-bottom: 0; }
     .ea-row-grid { grid-template-columns: 1fr 1fr 1fr; }
     .ea-remove { white-space: nowrap; }
-    .ea-numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .ea-numbers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
     #ea-status { min-height: 18px; font-size: 12px; margin-top: 8px; }
     .ea-ok { color: #2e7d32; }
     .ea-err { color: #c62828; }
@@ -31,21 +31,13 @@
   </div>
 
   <div class="ea-section">
-    <h2 data-i18n="settings.sampling.title">Sampling</h2>
+    <h2 data-i18n="settings.sampling.title">Grid share Flow trigger</h2>
     <p class="ea-hint" data-i18n="settings.sampling.hint">
-      How often the meters are sampled, how long the grid-share value is smoothed,
-      and how much it must move (percentage points) before the "grid share changed"
-      Flow trigger fires.
+      How much the smoothed grid share must move (percentage points) before the
+      "grid share changed" Flow trigger fires. Meters are sampled every 5 minutes
+      and the share is smoothed over the last 5 samples (25 min); both are fixed.
     </p>
     <div class="ea-numbers">
-      <div class="homey-form-group">
-        <label class="homey-form-label" for="intervalSeconds">Interval (s)</label>
-        <input class="homey-form-input" id="intervalSeconds" type="number" min="10" step="5" />
-      </div>
-      <div class="homey-form-group">
-        <label class="homey-form-label" for="smoothingMinutes">Smoothing (min)</label>
-        <input class="homey-form-input" id="smoothingMinutes" type="number" min="1" step="1" />
-      </div>
       <div class="homey-form-group">
         <label class="homey-form-label" for="shareChangeThreshold">Trigger threshold (%)</label>
         <input class="homey-form-input" id="shareChangeThreshold" type="number" min="0" step="1" />
@@ -147,8 +139,6 @@
     }
 
     function render() {
-      document.getElementById('intervalSeconds').value = CONFIG.intervalSeconds != null ? CONFIG.intervalSeconds : 60;
-      document.getElementById('smoothingMinutes').value = CONFIG.smoothingMinutes != null ? CONFIG.smoothingMinutes : 5;
       document.getElementById('shareChangeThreshold').value = CONFIG.shareChangeThreshold != null ? CONFIG.shareChangeThreshold : 5;
 
       const grid = CONFIG.grid || {};
@@ -259,8 +249,6 @@
           : null,
         pv,
         battery,
-        intervalSeconds: num('intervalSeconds', 60),
-        smoothingMinutes: num('smoothingMinutes', 5),
         shareChangeThreshold: num('shareChangeThreshold', 5),
       };
     }

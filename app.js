@@ -3,6 +3,7 @@
 const Homey = require('homey');
 const { HomeyAPI } = require('homey-api');
 const { computeHouseSplit, attribute } = require('./lib/allocation');
+const { SAMPLE_INTERVAL_SECONDS } = require('./lib/constants');
 
 const CONFIG_KEY = 'config';
 
@@ -10,8 +11,6 @@ const DEFAULT_CONFIG = {
   grid: null, // { deviceId, importCapability, exportCapability }
   pv: [], // [{ deviceId, capability }]
   battery: [], // [{ deviceId, chargeCapability, dischargeCapability }]
-  intervalSeconds: 60,
-  smoothingMinutes: 5,
   shareChangeThreshold: 5
 };
 
@@ -109,8 +108,7 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
     this.baselines.clear();
     this.lastTickAt = null;
 
-    const cfg = this.getConfig();
-    const intervalMs = Math.max(10, Number(cfg.intervalSeconds) || 60) * 1000;
+    const intervalMs = SAMPLE_INTERVAL_SECONDS * 1000;
 
     this._sampleTimer = this.homey.setInterval(() => {
       this.tick().catch((err) => this.error('sample tick failed:', err));
@@ -165,7 +163,8 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
     for (const consumer of this.consumers) {
       const monitoredId = consumer.getMonitoredDeviceId();
       if (!monitoredId) continue;
-      const rec = { key: this._key(monitoredId, 'meter_power'), deviceId: monitoredId, capability: 'meter_power' };
+      const cap = consumer.getMonitoredCapability();
+      const rec = { key: this._key(monitoredId, cap), deviceId: monitoredId, capability: cap };
       monitoredReads.set(consumer, rec);
       reads.push(rec);
     }
@@ -192,7 +191,7 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
     }
 
     const dtSeconds = (now - this.lastTickAt) / 1000;
-    const maxGapSeconds = Math.max((Number(cfg.intervalSeconds) || 60) * 5, 300);
+    const maxGapSeconds = SAMPLE_INTERVAL_SECONDS * 5;
 
     const rebaseline = () => {
       for (const [key, value] of current) this.baselines.set(key, value);
@@ -236,11 +235,18 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
     }
 
     const split = computeHouseSplit({ gridImport, gridExport, pv, batCharge, batDischarge });
+
+    const inputs = `gridImport=${gridImport} gridExport=${gridExport} pv=${pv} `
+      + `batCharge=${batCharge} batDischarge=${batDischarge} houseTotal=${split.houseTotal}`;
+
     if (!split.ok) {
-      this.log(`interval skipped: ${split.reason}`);
+      this.log(`interval skipped: ${split.reason} (${inputs})`);
       rebaseline();
       return;
     }
+
+    this.log(`interval allocated: ${inputs} `
+      + `-> houseGrid=${split.houseGrid} housePv=${split.housePv} houseBat=${split.houseBat}`);
 
     for (const consumer of this.consumers) {
       try {

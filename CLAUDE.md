@@ -32,8 +32,8 @@ energy each device consumes came from the **grid**, from **PV/solar**, and from 
 **home battery** (battery source optional; could also be an EV/V2G charger).
 
 Inputs: the configured `meter_power(.x)` capabilities of the grid / PV / battery
-source devices, plus each monitored device's `meter_power` (see "Sources" below for
-exact capability handling).
+source devices, plus the `meter_power(.x)` capability each monitored allocator
+was paired to (see "Sources" below for exact capability handling).
 
 Outputs (per monitored device):
 
@@ -121,14 +121,24 @@ picker is used to choose devices; for each role the user then maps the specific
 
 ### Sampling
 
-- Timer poll, default ~60 s interval (configurable).
-- Share values: near-instantaneous, smoothed over a trailing ~5 min window
-  (rolling average of the last ~5 samples at a 1 min interval).
+- Timer poll every `SAMPLE_INTERVAL_SECONDS` (300 s / 5 min), **fixed** in
+  `lib/constants.js`. Not user-configurable: coarse meters (e.g. a PV inverter
+  reporting `meter_power` to 0.1 kWh) barely move over a short interval at low
+  power, which produced a stream of zero-delta "skipped" intervals. The only
+  user-tunable number left is the Flow trigger threshold.
+- Share values: smoothed over a trailing window of `SMOOTHING_INTERVALS` (5)
+  sample intervals = 25 min. Also fixed. `_smoothingMs()` in
+  `lib/AllocationDevice.js` = `SAMPLE_INTERVAL_SECONDS × SMOOTHING_INTERVALS`.
 
 ### Devices / topology
 
-- Driver `device-allocation` ("Device Energy Allocation"): one device per
-  monitored device (bound via the device picker), exposing
+- Driver `device-allocation` ("Device Energy Allocation"): one allocator per
+  monitored **counter**. Pairing lists one entry per `meter_power(.x)` capability
+  on each eligible device, so a device with several energy meters can be added
+  once per meter; `data` is `{ deviceId, capability }` and the same device with a
+  different capability is a distinct allocator. `device.js`
+  `getMonitoredCapability()` returns `data.capability` (falls back to plain
+  `meter_power` for devices paired before the picker existed). Exposes
   `meter_power.grid/.pv/.bat` + share capabilities.
 - Driver `house-allocation` ("House Energy Allocation"): one aggregate
   device representing ΔHouse from the energy balance (split into grid/pv/bat),
@@ -161,7 +171,7 @@ strategy" above.
 
 - Interval where ΔHouse ≤ 0 but a monitored device shows consumption (inconsistent
   balance): **skip the whole interval's allocation** and re-baseline, same as a
-  counter reset. The ~5 min share smoothing absorbs the occasional dropped
+  counter reset. The 5-interval share smoothing absorbs the occasional dropped
   interval; the next interval is expected to be consistent.
 - Consequence: skipped intervals are lost from the cumulative
   `meter_power.grid/.pv/.bat` totals, so they can slightly under-count over long
@@ -170,7 +180,8 @@ strategy" above.
 ### Configuration scope
 
 - App-level settings page (`settings/index.html` + `api.js`) configures the source
-  devices / capability mappings and the sampling numbers for the whole house.
+  devices / capability mappings and the Flow trigger threshold for the whole
+  house. Sample interval and smoothing window are fixed constants (`lib/constants.js`).
 - Per-allocator-device override: **deferred** (not in v1). App-level only for now.
 
 ### Flow cards (shared by both drivers)
@@ -208,8 +219,6 @@ purpose-built card.
 
 ### Known v1 limitations / TODO
 
-- Monitored devices must expose a **plain `meter_power`** capability (pairing
-  filters to those). No sub-capability picker for the monitored device yet.
 - Baselines live in memory only — an app restart drops the in-flight interval
   (acceptable per the reset policy).
 - `homey app run` on hardware not yet done.
