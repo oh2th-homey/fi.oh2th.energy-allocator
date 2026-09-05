@@ -151,8 +151,51 @@ Sources:
 - `list_devices` calls `Driver.onPairListDevices()` → return
   `[{ name, data: { …unique immutable id… } }]`. Put the monitored device id in
   `data` so the same device can't be added twice.
-- Custom views: `{ "template": "custom", "id": "...", "html": "..." }` + a file in
-  `pair/`, driven by `Driver.onPair(session)` with `session.setHandler(event, fn)`.
+
+- **Custom views**: a `pair` entry with **no `"template"` field** is custom — id
+  `foo` requires `drivers/<driver>/pair/foo.html` to exist (confirmed in the
+  installed CLI's manifest validator, `homey-lib/lib/App/index.js`:
+  `typeof pairView.template === 'undefined'` ⇒
+  `_ensureFileExistsCaseSensitive('drivers/<id>/pair/<pairView.id>.html')`).
+  There is no `"html"` manifest field and no `"template": "custom"` — omitting
+  `template` *is* what makes it custom. Manifest fields per entry: `id`
+  (required), `template`, `options`, `navigation.{prev,next}`.
+
+- **Custom view files are HTML *fragments*, not full documents** — confirmed
+  against real published apps (e.g. `lovethyresson/com.homevolt.local`,
+  `shaarkys/com.xiaomi-miio`): no `<!doctype>`/`<head>`/`<body>`, no
+  `onHomeyReady`/`Homey.ready()` (that handshake is settings-page-only). Just
+  `<style>` + markup + a top-level `<script>`; the `Homey` global and jQuery
+  (`$`) are already present when it runs. Homey Style Library form classes work
+  out of the box (no stylesheet to load): `.homey-form-input`,
+  `.homey-form-select`, `.homey-button-primary-full` (+ `-shadow`,
+  `-secondary-shadow`, `-danger-shadow`, `-transparent`, `-small`), and
+  checkboxes:
+
+  ```html
+  <label class="homey-form-checkbox">
+    <input class="homey-form-checkbox-input" type="checkbox" />
+    <span class="homey-form-checkbox-checkmark"></span>
+    <span class="homey-form-checkbox-text">Label</span>
+  </label>
+  ```
+
+- **Front-end `Homey` object in a pair view** (promise-based, unlike settings'
+  callback-style `Homey.api`): `Homey.emit(event, data)` → `Promise<result>`,
+  resolved by the driver's `session.setHandler(event, async (data) => result)`.
+  `Homey.showView(id)` / `nextView()` / `prevView()` to navigate.
+  `Homey.createDevice({ name, data })` → `Promise` (creates the device directly
+  — no `add_devices` template needed from a custom view). `Homey.done()` closes
+  pairing. `Homey.alert(msg)`, `Homey.showLoadingOverlay()` /
+  `hideLoadingOverlay()`. `Homey.setViewStoreValue`/`getViewStoreValue` can pass
+  data between views instead of driver-side closure state.
+
+- **Passing data between two custom pair views**: simplest is a closure variable
+  in `Driver.onPair(session)` — view 1 posts its selection via
+  `Homey.emit('some_event', data)` → `session.setHandler('some_event', async (data) => { this._x = data; })`;
+  view 2's `session.setHandler` for its own list event reads `this._x`. Each
+  `onPair(session)` call is scoped to one pairing attempt, so this doesn't leak
+  across pairing sessions.
 
 ## Flow (device-scoped) usage
 

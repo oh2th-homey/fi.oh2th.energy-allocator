@@ -133,13 +133,28 @@ picker is used to choose devices; for each role the user then maps the specific
 ### Devices / topology
 
 - Driver `device-allocation` ("Device Energy Allocation"): one allocator per
-  monitored **counter**. Pairing lists one entry per `meter_power(.x)` capability
-  on each eligible device, so a device with several energy meters can be added
-  once per meter; `data` is `{ deviceId, capability }` and the same device with a
-  different capability is a distinct allocator. `device.js`
-  `getMonitoredCapability()` returns `data.capability` (falls back to plain
-  `meter_power` for devices paired before the picker existed). Exposes
-  `meter_power.grid/.pv/.bat` + share capabilities.
+  monitored **counter**. `data` is `{ deviceId, capability, uid }`; `uid` is a
+  random string minted at pairing time purely so `data` stays unique when the
+  same `deviceId`+`capability` is paired more than once — that's intentional,
+  not blocked, since one counter can usefully feed several allocators (e.g. for
+  different Flow purposes). `device.js` `getMonitoredCapability()` returns
+  `data.capability` (falls back to plain `meter_power` for devices paired
+  before the picker existed). Exposes `meter_power.grid/.pv/.bat` + share
+  capabilities.
+  - **Pairing is two custom stages** (not the built-in `list_devices` +
+    `add_devices` templates — with hundreds of candidate devices in the house, a
+    flat one-row-per-counter list was unusable):
+    1. `pair/select_devices.html` — filterable checkbox list of physical devices
+       (any `meter_power(.x)` cap; only this app's own devices are excluded),
+       one row per **device**.
+    2. `pair/select_counters.html` — for the devices picked in step 1, a
+       checkbox list of **all** their `meter_power(.x)` counters (not just
+       unused ones), grouped per device; each checked counter becomes one
+       allocator via `Homey.createDevice()`.
+    Selection is carried from step 1 to step 2 via a closure variable in
+    `driver.js` `onPair(session)` (`session.setHandler('select_source_devices', …)`
+    then `session.setHandler('list_counters', …)`) — see the Pairing section of
+    `docs/homey-sdk-notes.md` for the confirmed custom-pair-view API.
 - Driver `house-allocation` ("House Energy Allocation"): one aggregate
   device representing ΔHouse from the energy balance (split into grid/pv/bat),
   independent of which loads are monitored.

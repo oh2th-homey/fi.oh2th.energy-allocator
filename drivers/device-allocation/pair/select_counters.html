@@ -1,0 +1,94 @@
+<style type="text/css">
+  .ea-hint { color: #888; font-size: 0.9em; margin: 0 0 12px; }
+  .ea-groups { max-height: 50vh; overflow-y: auto; margin-bottom: 16px; }
+  .ea-group { margin-bottom: 18px; }
+  .ea-group-title { font-weight: 600; margin-bottom: 6px; }
+  .ea-row { display: block; padding: 4px 0; }
+  .ea-empty { color: #888; font-size: 0.9em; padding: 12px 0; }
+</style>
+
+<p class="ea-hint">
+  Choose which energy counter(s) to add. Each one becomes its own allocator
+  device.
+</p>
+<div class="ea-groups" id="ea-groups"></div>
+<button class="homey-button-primary-full" type="button" id="ea-add" disabled>Add devices</button>
+
+<script type="text/javascript">
+  function updateAddState() {
+    const anyChecked = document.querySelectorAll('#ea-groups input:checked').length > 0;
+    document.getElementById('ea-add').disabled = !anyChecked;
+  }
+
+  function renderGroups(groups) {
+    const container = document.getElementById('ea-groups');
+    container.innerHTML = '';
+
+    if (!groups || groups.length === 0) {
+      container.innerHTML = '<p class="ea-empty">No energy counters found on the selected devices.</p>';
+      return;
+    }
+
+    for (const group of groups) {
+      const title = group.zone ? `${group.name} (${group.zone})` : group.name;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'ea-group';
+      wrap.innerHTML = '<div class="ea-group-title"></div>';
+      wrap.querySelector('.ea-group-title').textContent = title;
+
+      for (const cap of group.capabilities) {
+        const row = document.createElement('label');
+        row.className = 'homey-form-checkbox ea-row';
+        row.innerHTML = ''
+          + `<input class="homey-form-checkbox-input" type="checkbox" />`
+          + '<span class="homey-form-checkbox-checkmark"></span>'
+          + '<span class="homey-form-checkbox-text"></span>';
+        row.querySelector('.homey-form-checkbox-text').textContent = cap.title;
+
+        const input = row.querySelector('input');
+        input.dataset.deviceId = group.deviceId;
+        input.dataset.capability = cap.id;
+        input.dataset.name = group.multiple ? `${title} (${cap.title}) allocation` : `${title} allocation`;
+        input.addEventListener('change', updateAddState);
+
+        wrap.appendChild(row);
+      }
+      container.appendChild(wrap);
+    }
+  }
+
+  document.getElementById('ea-add').addEventListener('click', async () => {
+    const checked = Array.from(document.querySelectorAll('#ea-groups input:checked'));
+    if (checked.length === 0) return;
+
+    Homey.showLoadingOverlay();
+    try {
+      for (const input of checked) {
+        // `uid` makes `data` unique even when the same deviceId+capability is
+        // paired more than once (allowed - one counter can feed several
+        // allocators for different purposes).
+        const uid = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+        await Homey.createDevice({
+          name: input.dataset.name,
+          data: { deviceId: input.dataset.deviceId, capability: input.dataset.capability, uid },
+        });
+      }
+      Homey.done();
+    } catch (err) {
+      Homey.hideLoadingOverlay();
+      Homey.alert(err.message || err);
+    }
+  });
+
+  Homey.showLoadingOverlay();
+  Homey.emit('list_counters', null)
+    .then((groups) => {
+      Homey.hideLoadingOverlay();
+      renderGroups(groups);
+    })
+    .catch((err) => {
+      Homey.hideLoadingOverlay();
+      Homey.alert(err.message || err);
+    });
+</script>

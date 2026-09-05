@@ -65,10 +65,10 @@
     "triggers": [
       {
         "title": {
-          "en": "Energy share changed"
+          "en": "Energy allocation changed"
         },
         "hint": {
-          "en": "Trigger when the  energy share changes by more than the configured number of percentage points."
+          "en": "Trigger when the energy share changes by more than the configured number of percentage points."
         },
         "args": [
           {
@@ -147,15 +147,13 @@
       },
       "pair": [
         {
-          "id": "list_devices",
-          "template": "list_devices",
+          "id": "select_devices",
           "navigation": {
-            "next": "add_devices"
+            "next": "select_counters"
           }
         },
         {
-          "id": "add_devices",
-          "template": "add_devices"
+          "id": "select_counters"
         }
       ],
       "id": "device-allocation"
@@ -225,7 +223,7 @@
     "measure_grid_share": {
       "type": "number",
       "title": {
-        "en": "Grid share"
+        "en": "Grid allocation"
       },
       "uiComponent": "sensor",
       "getable": true,

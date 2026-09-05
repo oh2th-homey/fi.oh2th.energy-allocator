@@ -5,34 +5,42 @@ const Homey = require('homey');
 module.exports = class DeviceAllocationDriver extends Homey.Driver {
 
   /**
-   * Lists one entry per `meter_power(.x)` counter on every eligible device, so a
-   * device that exposes several energy meters (e.g. `meter_power.consumed` and
-   * `meter_power.produced`) can be added once per counter. Entries whose exact
-   * device + capability pair is already followed are hidden; the same device
-   * with a different capability stays selectable.
+   * Two-stage custom pairing (see `pair/select_devices.html` and
+   * `pair/select_counters.html`): pick one or more physical devices first, then
+   * pick which `meter_power(.x)` counter(s) to add per device. Splitting it this
+   * way keeps the first list short even with hundreds of candidate devices,
+   * since it lists devices once instead of once per counter.
+   *
+   * A device/counter already followed by an existing allocator is **not**
+   * excluded - the same counter can be added more than once (e.g. to feed
+   * several differently-named allocators for different purposes). Each pair
+   * view assigns its own `uid` in `data` so Homey treats every allocator as a
+   * distinct device even when `deviceId` + `capability` repeat.
    */
-  async onPairListDevices() {
-    const meterDevices = await this.homey.app.getMeterDevices();
-    const taken = new Set(
-      this.getDevices().map((device) => {
-        const data = device.getData();
-        return `${data.deviceId}::${data.capability || 'meter_power'}`;
-      }),
-    );
+  async onPair(session) {
+    let selectedDeviceIds = [];
 
-    const results = [];
-    for (const device of meterDevices) {
-      const multiple = device.capabilities.length > 1;
-      for (const cap of device.capabilities) {
-        if (taken.has(`${device.id}::${cap.id}`)) continue;
-        const label = multiple ? `${device.name} (${cap.title})` : device.name;
-        results.push({
-          name: `${label} allocation`,
-          data: { deviceId: device.id, capability: cap.id },
-        });
-      }
-    }
+    session.setHandler('list_source_devices', async () => {
+      const meterDevices = await this.homey.app.getMeterDevices();
+      return meterDevices.map((device) => ({ id: device.id, name: device.name, zone: device.zone }));
+    });
 
-    return results;
+    session.setHandler('select_source_devices', async (deviceIds) => {
+      selectedDeviceIds = Array.isArray(deviceIds) ? deviceIds : [];
+    });
+
+    session.setHandler('list_counters', async () => {
+      const meterDevices = await this.homey.app.getMeterDevices();
+
+      return meterDevices
+        .filter((device) => selectedDeviceIds.includes(device.id))
+        .map((device) => ({
+          deviceId: device.id,
+          name: device.name,
+          zone: device.zone,
+          multiple: device.capabilities.length > 1,
+          capabilities: device.capabilities,
+        }));
+    });
   }
 };

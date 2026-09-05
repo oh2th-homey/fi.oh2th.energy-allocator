@@ -1,0 +1,78 @@
+<style type="text/css">
+  .ea-hint { color: #888; font-size: 0.9em; margin: 0 0 12px; }
+  .ea-list { max-height: 45vh; overflow-y: auto; margin-bottom: 16px; }
+  .ea-row { display: block; padding: 6px 0; }
+  .ea-empty { color: #888; font-size: 0.9em; padding: 12px 0; }
+</style>
+
+<p class="ea-hint">
+  Select one or more devices that expose an energy counter. You'll pick which
+  counter(s) to use on the next screen.
+</p>
+<input class="homey-form-input" type="text" id="ea-search" placeholder="Filter by name or zone…" />
+<div class="ea-list" id="ea-list"></div>
+<button class="homey-button-primary-full" type="button" id="ea-next" disabled>Next</button>
+
+<script type="text/javascript">
+  let DEVICES = [];
+
+  function label(device) {
+    return device.zone ? `${device.name} (${device.zone})` : device.name;
+  }
+
+  function renderList(filterText) {
+    const list = document.getElementById('ea-list');
+    const term = (filterText || '').trim().toLowerCase();
+    const shown = DEVICES.filter((device) => !term || label(device).toLowerCase().includes(term));
+
+    list.innerHTML = '';
+    if (shown.length === 0) {
+      list.innerHTML = '<p class="ea-empty">No matching devices.</p>';
+      return;
+    }
+
+    for (const device of shown) {
+      const row = document.createElement('label');
+      row.className = 'homey-form-checkbox ea-row';
+      row.innerHTML = ''
+        + `<input class="homey-form-checkbox-input" type="checkbox" value="${device.id}" />`
+        + '<span class="homey-form-checkbox-checkmark"></span>'
+        + '<span class="homey-form-checkbox-text"></span>';
+      row.querySelector('.homey-form-checkbox-text').textContent = label(device);
+      row.querySelector('input').addEventListener('change', updateNextState);
+      list.appendChild(row);
+    }
+  }
+
+  function updateNextState() {
+    const anyChecked = document.querySelectorAll('#ea-list input:checked').length > 0;
+    document.getElementById('ea-next').disabled = !anyChecked;
+  }
+
+  document.getElementById('ea-search').addEventListener('input', (e) => renderList(e.target.value));
+
+  document.getElementById('ea-next').addEventListener('click', () => {
+    const ids = Array.from(document.querySelectorAll('#ea-list input:checked')).map((el) => el.value);
+    if (ids.length === 0) return;
+
+    Homey.showLoadingOverlay();
+    Homey.emit('select_source_devices', ids)
+      .then(() => Homey.showView('select_counters'))
+      .catch((err) => {
+        Homey.hideLoadingOverlay();
+        Homey.alert(err.message || err);
+      });
+  });
+
+  Homey.showLoadingOverlay();
+  Homey.emit('list_source_devices', null)
+    .then((devices) => {
+      DEVICES = devices || [];
+      Homey.hideLoadingOverlay();
+      renderList('');
+    })
+    .catch((err) => {
+      Homey.hideLoadingOverlay();
+      Homey.alert(err.message || err);
+    });
+</script>

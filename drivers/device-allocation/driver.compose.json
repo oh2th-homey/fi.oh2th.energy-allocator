@@ -45,15 +45,13 @@
   },
   "pair": [
     {
-      "id": "list_devices",
-      "template": "list_devices",
+      "id": "select_devices",
       "navigation": {
-        "next": "add_devices"
+        "next": "select_counters"
       }
     },
     {
-      "id": "add_devices",
-      "template": "add_devices"
+      "id": "select_counters"
     }
   ]
 }
