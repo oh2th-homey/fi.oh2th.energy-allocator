@@ -7,13 +7,20 @@
   <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
   <style>
     body { margin: 0; padding: 0; }
-    .ea-section { margin: 0 0 28px; }
+    .homey-form-group { margin: 0 0 10px !important; }
+    .homey-form-label { margin: 0 0 4px !important; }
+    .ea-section { margin: 0 0 20px; }
     .ea-section h2 { font-size: 14px; margin: 0 0 4px; }
     .ea-hint { color: var(--homey-text-color-light, #777); font-size: 12px; margin: 0 0 12px; }
-    .ea-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 8px; }
-    .ea-row .homey-form-group { margin-bottom: 0; }
-    .ea-row-grid { grid-template-columns: 1fr 1fr 1fr; }
-    .ea-remove { white-space: nowrap; }
+    .ea-row { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--homey-color-mono-100, #e5e5e5); }
+    .ea-row:last-child { border-bottom: none; margin-bottom: 4px; padding-bottom: 0; }
+    .ea-row .homey-form-group { margin-bottom: 0 !important; }
+    .ea-row-device { display: flex; gap: 8px; align-items: end; margin-bottom: 8px; }
+    .ea-row-device .homey-form-group { flex: 1 1 auto; }
+    .ea-row-caps { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .ea-row-caps-2 { grid-template-columns: 1fr 1fr; }
+    .ea-trash { flex: 0 0 auto; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; }
+    .ea-trash svg { width: 16px; height: 16px; display: block; }
     .ea-numbers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
     #ea-status { min-height: 18px; font-size: 12px; margin-top: 8px; }
     .ea-ok { color: #2e7d32; }
@@ -52,18 +59,22 @@
       the one that counts exported energy (leave export empty if you have no
       feed-in).
     </p>
-    <div class="ea-row ea-row-grid">
-      <div class="homey-form-group">
-        <label class="homey-form-label" for="grid-device">Device</label>
-        <select class="homey-form-select" id="grid-device"></select>
+    <div class="ea-row">
+      <div class="ea-row-device">
+        <div class="homey-form-group">
+          <label class="homey-form-label" for="grid-device">Device</label>
+          <select class="homey-form-select" id="grid-device"></select>
+        </div>
       </div>
-      <div class="homey-form-group">
-        <label class="homey-form-label" for="grid-import">Imported energy</label>
-        <select class="homey-form-select" id="grid-import"></select>
-      </div>
-      <div class="homey-form-group">
-        <label class="homey-form-label" for="grid-export">Exported energy (optional)</label>
-        <select class="homey-form-select" id="grid-export"></select>
+      <div class="ea-row-caps ea-row-caps-2">
+        <div class="homey-form-group">
+          <label class="homey-form-label" for="grid-import">Imported energy</label>
+          <select class="homey-form-select" id="grid-import"></select>
+        </div>
+        <div class="homey-form-group">
+          <label class="homey-form-label" for="grid-export">Exported energy (optional)</label>
+          <select class="homey-form-select" id="grid-export"></select>
+        </div>
       </div>
     </div>
   </div>
@@ -164,22 +175,28 @@
       const row = document.createElement('div');
       row.className = 'ea-row';
       row.innerHTML = `
-        <div class="homey-form-group">
-          <label class="homey-form-label">Device</label>
-          <select class="homey-form-select js-device"></select>
-        </div>
-        <div class="homey-form-group">
-          <label class="homey-form-label">Production energy</label>
-          <select class="homey-form-select js-cap"></select>
-        </div>
-        <div></div>
-        <button class="homey-button-small ea-remove" type="button">Remove</button>`;
+        <div class="ea-row-device">
+          <div class="homey-form-group">
+            <label class="homey-form-label">Device</label>
+            <select class="homey-form-select js-device"></select>
+          </div>
+          <div class="homey-form-group">
+            <label class="homey-form-label">Production energy</label>
+            <select class="homey-form-select js-cap"></select>
+          </div>
+          <button class="homey-button-danger-small ea-trash" type="button" title="Remove" aria-label="Remove">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>`;
       const device = row.querySelector('.js-device');
       const cap = row.querySelector('.js-cap');
       device.innerHTML = deviceOptions(src.deviceId);
       cap.innerHTML = capabilityOptions(src.deviceId, src.capability, false);
       device.onchange = () => { cap.innerHTML = capabilityOptions(device.value, null, false); };
-      row.querySelector('.ea-remove').onclick = () => row.remove();
+      row.querySelector('.ea-trash').onclick = () => row.remove();
       container.appendChild(row);
     }
 
@@ -189,19 +206,28 @@
       const row = document.createElement('div');
       row.className = 'ea-row';
       row.innerHTML = `
-        <div class="homey-form-group">
-          <label class="homey-form-label">Device</label>
-          <select class="homey-form-select js-device"></select>
+        <div class="ea-row-device">
+          <div class="homey-form-group">
+            <label class="homey-form-label">Device</label>
+            <select class="homey-form-select js-device"></select>
+          </div>
+          <button class="homey-button-danger-small ea-trash" type="button" title="Remove" aria-label="Remove">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
         </div>
-        <div class="homey-form-group">
-          <label class="homey-form-label">Charge energy</label>
-          <select class="homey-form-select js-charge"></select>
-        </div>
-        <div class="homey-form-group">
-          <label class="homey-form-label">Discharge energy</label>
-          <select class="homey-form-select js-discharge"></select>
-        </div>
-        <button class="homey-button-small ea-remove" type="button">Remove</button>`;
+        <div class="ea-row-caps ea-row-caps-2">
+          <div class="homey-form-group">
+            <label class="homey-form-label">Charge energy</label>
+            <select class="homey-form-select js-charge"></select>
+          </div>
+          <div class="homey-form-group">
+            <label class="homey-form-label">Discharge energy</label>
+            <select class="homey-form-select js-discharge"></select>
+          </div>
+        </div>`;
       const device = row.querySelector('.js-device');
       const charge = row.querySelector('.js-charge');
       const discharge = row.querySelector('.js-discharge');
@@ -212,7 +238,7 @@
         charge.innerHTML = capabilityOptions(device.value, null, false);
         discharge.innerHTML = capabilityOptions(device.value, null, false);
       };
-      row.querySelector('.ea-remove').onclick = () => row.remove();
+      row.querySelector('.ea-trash').onclick = () => row.remove();
       container.appendChild(row);
     }
 
