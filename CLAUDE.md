@@ -79,7 +79,13 @@ cards. Only define custom capabilities where no standard one fits.
   device-allocation device mirrors/sums other devices' own already-counted
   `meter_power`; a bare `meter_power` + `energy` object would enroll it as an
   independent consumer in the Homey Energy report, counting that consumption
-  twice).
+  twice). Homey's built-in "Exclude from Energy" device setting can't be set
+  from app code as a belt-and-braces measure: the SDK docs reserve the
+  `energy_` setting-id prefix for Homey itself, and `setSettings({
+  energy_exclude: true })` from device code has no effect — confirmed by
+  testing. If a paired device still shows up in the Energy tab despite having
+  no bare `meter_power`/`energy` object, excluding it is a manual, one-time
+  step for the user in that device's Advanced Settings.
 - Meter reset uses a **standard maintenance-action** `button.reset_meter`
   (`maintenanceAction: true` in `capabilitiesOptions`), not a settings button.
 - Share values: no standard percentage capability exists, so two custom
@@ -291,6 +297,13 @@ purpose-built card.
 - Baselines live in memory only — an app restart drops the in-flight interval
   (acceptable per the reset policy).
 - `homey app run` on hardware not yet done.
+- **Unverified**: whether a device with only `meter_power.<sub>` sub-capabilities
+  (no bare `meter_power`, no `energy` object) is actually excluded from Homey
+  Energy's house-usage total, or just from the per-device "Constant power
+  usage"/energy-object machinery while still being counted. The "Exclude from
+  Energy" toggle showing up in Advanced Settings for these devices at all hints
+  Homey may track them by capability family regardless of the missing `energy`
+  object — needs confirming on hardware once `homey app run` happens.
 - Placeholder art (`assets/`, `drivers/*/assets/`) — black-on-transparent bar/pie
   motifs; replace before publishing.
 

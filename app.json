@@ -246,7 +246,7 @@
     "measure_grid_share": {
       "type": "number",
       "title": {
-        "en": "Grid allocation"
+        "en": "Grid usage"
       },
       "uiComponent": "sensor",
       "getable": true,

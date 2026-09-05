@@ -57,6 +57,15 @@ Sources:
   (bare `meter_power`, imported/exported, cumulative P1, home battery, EV, …).
   A device that only has `meter_power.<sub>` sub-capabilities and class `sensor`
   validated at `publish` level **without** an `energy` object (confirmed here).
+- Homey's built-in **"Exclude from Energy"** device setting (backed by a setting
+  id starting `energy_`, e.g. `energy_exclude`) is **not** app-writable: the SDK
+  docs reserve the `energy_` prefix for Homey itself, and calling
+  `device.setSettings({ energy_exclude: true })` from device code has no effect
+  (confirmed by testing — no error, but the toggle doesn't change). There is no
+  supported API for a device to exclude itself from Homey Energy at runtime;
+  `setEnergy()`/`getEnergy()` exist but only manage the `energy` object, not this
+  toggle. If a device needs to be excluded, that's a manual, one-time step for
+  the user in that device's Advanced Settings.
 - **Maintenance action**: add a `button.<name>` capability and configure it in
   `capabilitiesOptions`:
 
