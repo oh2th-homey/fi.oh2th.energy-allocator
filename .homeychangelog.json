@@ -4,5 +4,8 @@
   },
   "0.0.2": {
     "en": "Allow muoltiple meter caps from device"
+  },
+  "0.1.0": {
+    "en": "First releasable version"
   }
 }
