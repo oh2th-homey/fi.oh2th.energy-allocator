@@ -38,7 +38,9 @@ below for exact capability handling).
 
 Outputs (per monitored device):
 
-- `meter_power.grid`, `meter_power.pv`, and (when battery configured) `meter_power.bat`
+- `meter_power.total` (device-allocation only — grid+pv+bat combined),
+  `meter_power.grid`, `meter_power.pv`, and (when battery configured)
+  `meter_power.bat`
 - share capabilities (`measure_grid_share`, `measure_self_sufficiency`)
 
 Requires the `homey:manager:api` permission to enumerate and read other apps' devices.
@@ -62,10 +64,16 @@ Prefer **standard** Homey capabilities (and their sub-capabilities) wherever
 possible — they bring sensible defaults for icons, units, Insights and Flow
 cards. Only define custom capabilities where no standard one fits.
 
-- Energy outputs use standard `meter_power` sub-capabilities: `meter_power.grid`,
-  `meter_power.pv`, `meter_power.bat`. No bare `meter_power` and no `energy`
-  object — deliberately keeps these synthetic figures out of Homey Energy so they
-  can't double-count the real meters.
+- Energy outputs use standard `meter_power` sub-capabilities: `meter_power.total`
+  (device-allocation only — the monitored counter(s)' combined total, i.e.
+  exactly `grid + pv + bat`), `meter_power.grid`, `meter_power.pv`,
+  `meter_power.bat`. No bare `meter_power` and no `energy` object on **either**
+  driver — deliberately keeps these synthetic figures out of Homey Energy so
+  they can't double-count the real meters they're derived from (a
+  device-allocation device mirrors/sums other devices' own already-counted
+  `meter_power`; a bare `meter_power` + `energy` object would enroll it as an
+  independent consumer in the Homey Energy report, counting that consumption
+  twice).
 - Meter reset uses a **standard maintenance-action** `button.reset_meter`
   (`maintenanceAction: true` in `capabilitiesOptions`), not a settings button.
 - Share values: no standard percentage capability exists, so two custom
@@ -186,7 +194,7 @@ picker is used to choose devices; for each role the user then maps the specific
     choice for an individual-mode device or the usual checkbox-set for a
     summary one, matching whatever `device.getAllocationMode()` already is.
     Submitting calls `device.setStoreValue(...)`, never touching the
-    `meter_power.grid/.pv/.bat` capability values, so accumulated totals carry
+    `meter_power.total/.grid/.pv/.bat` capability values, so accumulated totals carry
     on unchanged — only the counter(s) `app.js` reads for this device change,
     effective on the very next sample tick (a brand-new counter simply starts
     its delta from zero on that first tick, per the normal reset-safe baseline
@@ -197,13 +205,19 @@ picker is used to choose devices; for each role the user then maps the specific
 
 ### Capabilities
 
-Both drivers expose the same set:
-`meter_power.grid`, `measure_grid_share`, `measure_self_sufficiency`, `button.reset_meter`
-always, plus `meter_power.pv` / `meter_power.bat` **dynamically**. See "Capability
-strategy" above.
+Both drivers expose `meter_power.grid`, `measure_grid_share`,
+`measure_self_sufficiency`, `button.reset_meter` always, plus `meter_power.pv` /
+`meter_power.bat` **dynamically**. `device-allocation` additionally exposes
+`meter_power.total` (grid+pv+bat combined) always — `house-allocation` doesn't,
+to avoid double-counting (see "Capability strategy" above).
 
 - Grid is mandatory, so `meter_power.grid` + the shares + the reset button are
-  fixed in each `driver.compose.json` `capabilities` list.
+  fixed in each `driver.compose.json` `capabilities` list; `device-allocation`'s
+  list also fixes in `meter_power.total`. `lib/AllocationDevice.js`
+  `_extraStaticCaps()` is how a driver-specific always-on capability like this
+  gets included in the shared `_syncCapabilities()` migration logic (so
+  existing paired devices gain it too, not just newly-paired ones) without
+  leaking onto the other driver.
 - `meter_power.pv` and `meter_power.bat` are **not** in the compose `capabilities`
   list (only in `capabilitiesOptions`, so `addCapability` picks up the title).
   `AllocationDevice._syncCapabilities()` adds `meter_power.pv` when the first solar

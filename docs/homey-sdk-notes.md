@@ -170,10 +170,23 @@ Sources:
 
 - **Homey Style Library classes** work out of the box in a custom view (no
   stylesheet to load) — use these instead of ad-hoc CSS wherever a fit exists;
-  only truly uncovered layout (e.g. a scrollable list's `max-height`) needs
-  custom CSS:
+  don't invent a scrollable inner box with your own `max-height`/`overflow-y`
+  for a long list either — checked several real pairing/repair views and none
+  do this; the pairing dialog itself scrolls the whole page, with any button
+  simply the last element in normal flow (no native pinned-footer-button or
+  stretch-to-fill mechanism to hook into instead).
   - Page chrome: `.homey-form` (wraps the page), `.homey-title` (`<h1>`),
     `.homey-subtitle` (`<p>`, doubles as muted/hint text).
+  - **Heading vs. caption, easy to mix up**: `.homey-form-fieldset` +
+    `.homey-form-legend` renders as a real heading (the docs call it out
+    explicitly: "use a homey-form-legend to create headings between form
+    elements"). `.homey-form-checkbox-set-title` / `.homey-form-radio-set-title`
+    render small and muted instead — confirmed by a user screenshot where a
+    per-group device name in that class was nearly invisible. Use
+    `-set-title` only for a genuinely subordinate caption above a checkbox/radio
+    cluster; use `.homey-form-fieldset` + `.homey-form-legend` (checkboxes/radios
+    still nest inside it fine) whenever the heading is identifying information
+    the user needs to actually read, e.g. "which device do these belong to".
   - Text/number/password/url input: `.homey-form-input`; select:
     `.homey-form-select`; textarea: `.homey-form-textarea`; label:
     `.homey-form-label`; wrapper: `.homey-form-group`.

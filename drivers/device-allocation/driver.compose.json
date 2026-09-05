@@ -4,12 +4,18 @@
   },
   "class": "sensor",
   "capabilities": [
+    "meter_power.total",
     "meter_power.grid",
     "measure_grid_share",
     "measure_self_sufficiency",
     "button.reset_meter"
   ],
   "capabilitiesOptions": {
+    "meter_power.total": {
+      "title": {
+        "en": "Total energy"
+      }
+    },
     "meter_power.grid": {
       "title": {
         "en": "Grid energy"
@@ -31,7 +37,7 @@
         "en": "Reset allocation meters"
       },
       "desc": {
-        "en": "Set the grid, solar and battery energy counters back to zero."
+        "en": "Set the total, grid, solar and battery energy counters back to zero."
       }
     }
   },

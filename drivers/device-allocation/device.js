@@ -46,4 +46,15 @@ module.exports = class DeviceAllocationDevice extends AllocationDevice {
     if (Array.isArray(store.counters) || Array.isArray(data.counters)) return 'summary';
     return 'individual';
   }
+
+  /**
+   * `meter_power.total` - the running total allocated to this device, i.e.
+   * `meter_power.grid + .pv + .bat` (individual mode: effectively a mirror of
+   * the one monitored counter; summary mode: the combined total of every
+   * counter it sums). Not on `house-allocation` - see
+   * {@link AllocationDevice#_extraStaticCaps}.
+   */
+  _extraStaticCaps() {
+    return ['meter_power.total'];
+  }
 };

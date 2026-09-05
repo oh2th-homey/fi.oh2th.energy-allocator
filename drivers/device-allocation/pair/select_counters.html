@@ -1,14 +1,8 @@
-<style type="text/css">
-  /* Homey Style Library has no scrollable-list primitive; this is the only
-     layout rule not covered by a homey-* class. */
-  .ea-scroll { max-height: 50vh; overflow-y: auto; }
-</style>
-
 <form class="homey-form">
   <h1 class="homey-title">Select counters</h1>
   <p class="homey-subtitle" id="ea-hint">Choose which energy counter(s) to add.</p>
 
-  <div class="ea-scroll" id="ea-groups"></div>
+  <div id="ea-groups"></div>
 
   <button class="homey-button-primary-full" type="button" id="ea-add" disabled>Add</button>
 </form>
@@ -48,9 +42,12 @@
     for (const group of groups) {
       const title = group.zone ? `${group.name} (${group.zone})` : group.name;
 
+      // .homey-form-fieldset + .homey-form-legend renders as a proper heading
+      // (unlike .homey-form-checkbox-set-title, a muted caption) - the device
+      // name here is identifying information, not a subordinate hint.
       const fieldset = document.createElement('fieldset');
-      fieldset.className = 'homey-form-checkbox-set';
-      fieldset.innerHTML = '<legend class="homey-form-checkbox-set-title"></legend>';
+      fieldset.className = 'homey-form-fieldset';
+      fieldset.innerHTML = '<legend class="homey-form-legend"></legend>';
       fieldset.querySelector('legend').textContent = title;
 
       for (const cap of group.capabilities) {
