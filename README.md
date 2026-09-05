@@ -1,87 +1,59 @@
 # Energy Allocator
 
-Estimate the split of grid, solar, and battery energy a device consumes.
+https://homey.app/a/fi.oh2th.energy-allocator/test
 
-A [Homey](https://homey.app/) app that adds virtual devices which attribute the
-energy a device consumes to its real origin — the **grid**, **PV/solar**, or a
-**home battery** (or EV / V2G) — using the `meter_power` (kWh) counters of devices
-you already own.
+Your home uses energy from several places at once - the grid, solar panels, and a home battery. This app looks at the meters you already have and works out how much of each device's energy came from the grid, from solar, and from the battery.
 
-## Requirements
-
-- Homey Pro with app platform compatibility `>=13.0.0`.
-- The `homey:manager:api` permission (declared by the app) to enumerate and read
-  other apps' devices.
+To do this, it needs permission to manage other devices, so it can read their energy meters (`meter_power`). Homey will ask you to approve this when you install the app.
 
 ## How it works
 
-Every 5 minutes the app samples the configured kWh counters and works with
-per-interval deltas. Each interval it solves the household energy balance
+Every 5 minutes, the app reads your grid, solar, and battery meters, plus the meters of the devices you're following. It compares how much each one changed since the last reading, and uses that to work out how much of the house's energy came from the grid, from solar, and from the battery. Each followed device then gets the same split.
 
-```text
-ΔPV + ΔGridImport + ΔBatDischarge  =  ΔHouse + ΔGridExport + ΔBatCharge
-```
+This is based on one simple rule: energy in must equal energy out.
 
-and first sets aside energy used for other purposes, such as sending power back
-to the grid or charging the battery, in a fixed order (export served
-PV → battery → grid; battery charging served PV → grid). What remains is the
-grid / solar / battery split of house consumption. Each monitored device's own
-delta is then attributed in the same proportions and accumulated.
+    solar + grid import + battery discharge = house use + grid export + battery charge
 
-### Robustness
+If a meter looks like it was reset, or the numbers don't add up, the app skips that one reading instead of guessing, and carries on normally with the next one.
 
-`meter_power` counters can be reset or re-seeded at any time. Every tracked
-counter (sources and monitored devices) keeps its own baseline; if any counter
-decreases, or the balance is inconsistent, or the sample gap is implausible, the
-whole interval is discarded and the baselines are re-synced. Reported shares are
-smoothed over the last 5 samples (25 minutes) so dropped intervals are not visible.
+## What you need
 
-## Configuration
+- **A grid meter** that reports imported energy (required). Exported energy is optional - leave it unset if your meter doesn't report it, or you don't export any.
+- **Solar and/or battery meters** (optional) - add as many as you have.
+- **Devices to follow**, each with its own energy meter (most smart plugs, EV chargers, heat pumps, etc. have one).
 
-The app has one shared configuration in its app settings. It applies to every
-allocator device and defines the meters used for the whole home:
+## Two kinds of devices
 
-- Select one grid meter and map its imported-energy capability. Exported energy
-  is optional and is treated as zero when no export capability is selected.
-- Add one or more PV devices and map each device's production-energy capability.
-- Add one or more battery or EV devices and map both the charge- and
-  discharge-energy capabilities for each one.
-- Set the Flow trigger threshold (how far the grid share must move to fire the
-  "grid share changed" trigger). The 5-minute sample interval and 25-minute
-  smoothing window are fixed.
+- **Device Energy Allocation** - follows one meter, or (in *summary* mode) several meters added together, e.g. three heating circuits combined into one "Heating" device.
+- **Whole House Energy Allocation** - one device for the whole home's split, no matter which devices you're following. Add it once.
 
-Capability ids for import and export are not standardized across drivers (for
-example, HomeWizard P1 uses `meter_power.consumed` and
-`meter_power.returned`), so each role must be mapped explicitly.
+## Setting it up
 
-## Devices
+1. Open the app's **Settings**. Choose your grid meter's import capability (and export, if it has one). Add your solar and/or battery meters the same way.
+2. Add a **Whole House Energy Allocation** device for the household total, and/or one or more **Device Energy Allocation** devices for specific appliances. Pairing asks you to pick individual or summary mode, then the meter(s) to follow.
+3. Picked the wrong device or meter? No need to delete and start over - use **Repair** on the device to change it. Nothing resets; the totals keep counting from the new source.
 
-| Driver              | Purpose                                                                                                                                                                                 |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `device-allocation` | One allocator per monitored `meter_power(.x)` counter, or one summary allocator that sums several counters (chosen during pairing); per-allocator grid/solar/battery energy and shares. |
-| `house-allocation`  | One aggregate device for whole-home consumption (ΔHouse) from the energy balance.                                                                                                       |
+## What you'll get
 
-### Capabilities
+Each device shows:
 
-- `meter_power.total` (device-allocation only) — allocated energy, grid+solar+battery combined
-- `meter_power.grid`, `meter_power.pv`, `meter_power.bat` — allocated energy
-- `measure_grid_share` (%) — grid energy / total consumed.
-- `measure_self_sufficiency` (%) — (solar + battery) energy / total consumed.
-- `button.reset_meter` — maintenance action to reset the allocation counters.
+- Its **grid**, **solar**, and **battery** energy (kWh), plus a **total** (Device Energy Allocation only).
+- **Grid allocation** and **Self-sufficiency** (%) - smoothed over about 25 minutes so they don't jump around.
+- An **"Energy allocation changed"** Flow trigger, and a button to reset a device's counters to zero.
 
-## Author
+These numbers don't show up in Homey's own Energy tab. That's on purpose - they're estimates based on meters Homey already counts, so showing them again would count that energy twice.
 
-Tapio Heiskanen
+## Useful links
 
-## License
+- [FAQ and Hints](https://community.homey.app/t/159148/2)
+- [TODO](https://community.homey.app/t/159148/3)
+- [Known Issues](https://community.homey.app/t/159148/4)
 
-This project is licensed under the [MIT License](LICENSE).
+---
 
-## Icon Attribution
+## Repository info
 
-Some icons are adapted from [The Noun Project](https://thenounproject.com/):
-
-- Icongeek26
-- apixlabs
-- Pictogramma
-- Icon Designer
+- **Requirements**: Homey Pro, firmware `>=13.0.0`. The app needs permission to manage other devices, so it can read their energy meters.
+- **Author**: Tapio Heiskanen
+- **License**: [MIT](LICENSE)
+- **Icon attribution**: some icons adapted from [The Noun Project](https://thenounproject.com/) - Icongeek26, apixlabs, Pictogramma, Icon Designer.

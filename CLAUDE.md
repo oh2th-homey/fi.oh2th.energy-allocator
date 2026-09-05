@@ -22,8 +22,14 @@
 - `README.txt` = App Store long description: plain text only (no Markdown, no URLs,
   no feature/Flow lists, no changelog), 1–2 short paragraphs. Localized as
   `README.<lang>.txt`. `app.json` `description` is a separate catchy one-liner that
-  must not repeat the app name or readme text. `README.md` is developer-only
-  (GitHub), not used by Homey.
+  must not repeat the app name or readme text. `README.md` is not used by Homey
+  either, but is deliberately **user-facing** (not developer/architecture docs —
+  that's this file): it doubles as the source for the app's
+  [community forum topic](https://community.homey.app/t/app-pro-energy-allocator/159148),
+  laid out as four `## Post N` sections meant to be copied verbatim into that
+  topic's first four posts (overview, FAQ, TODO, known issues). Keep it in that
+  voice and structure when it needs updating, and mirror any user-relevant
+  change there (e.g. a new capability, a changed default) into the matching post.
 
 ## Goal
 
@@ -52,7 +58,7 @@ Requires the `homey:manager:api` permission to enumerate and read other apps' de
   **separate** capabilities/sub-capabilities, not by sign.
 - Allocation uses **kWh counters only** — `meter_power(.x)`. `measure_power` (W) is
   not used for allocation (kWh counters are more reliable end-to-end from source to
-  consumer). It may later back a live power-breakdown capability, nothing more.
+  consumer).
 - Direction capability ids are **not standardized**. Older drivers (e.g. HomeWizard
   P1, pre-dating the standard caps) use `meter_power.consumed` /
   `meter_power.returned`; newer ones `meter_power.imported` / `meter_power.exported`.
@@ -228,8 +234,6 @@ to avoid double-counting (see "Capability strategy" above).
 - Re-adding a dynamic capability appends it after `button.reset_meter` in the UI
   (Homey has no reorder API) — cosmetic only. Removing it also drops its stored
   total and Insights history; a later re-add starts the counter from 0.
-- `measure_power.*` live breakdown may be added later — `lib/AllocationDevice.js`
-  is structured so it can be.
 - Cumulative counters otherwise run forever like a real meter.
 
 ### Edge cases
@@ -297,7 +301,6 @@ Status: strong v1 architecture, but not yet fully hardened for every runtime edg
 - Strengths
   - The core allocation model in `lib/allocation.js` is clear, conservative, and aligns well with Homey meter semantics.
   - Counter reset detection in `app.js` is a real strength; skipping inconsistent intervals is preferable to inventing energy.
-  - `lib/AllocationDevice.js` keeps shared behavior clean and extensible for future power-breakdown capabilities.
   - Share smoothing in `lib/SmoothingWindow.js` is an appropriate design for UI/Flow stability.
 
 - Risks / follow-ups
