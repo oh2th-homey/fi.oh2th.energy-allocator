@@ -166,19 +166,39 @@ Sources:
   `shaarkys/com.xiaomi-miio`): no `<!doctype>`/`<head>`/`<body>`, no
   `onHomeyReady`/`Homey.ready()` (that handshake is settings-page-only). Just
   `<style>` + markup + a top-level `<script>`; the `Homey` global and jQuery
-  (`$`) are already present when it runs. Homey Style Library form classes work
-  out of the box (no stylesheet to load): `.homey-form-input`,
-  `.homey-form-select`, `.homey-button-primary-full` (+ `-shadow`,
-  `-secondary-shadow`, `-danger-shadow`, `-transparent`, `-small`), and
-  checkboxes:
+  (`$`) are already present when it runs.
 
-  ```html
-  <label class="homey-form-checkbox">
-    <input class="homey-form-checkbox-input" type="checkbox" />
-    <span class="homey-form-checkbox-checkmark"></span>
-    <span class="homey-form-checkbox-text">Label</span>
-  </label>
-  ```
+- **Homey Style Library classes** work out of the box in a custom view (no
+  stylesheet to load) — use these instead of ad-hoc CSS wherever a fit exists;
+  only truly uncovered layout (e.g. a scrollable list's `max-height`) needs
+  custom CSS:
+  - Page chrome: `.homey-form` (wraps the page), `.homey-title` (`<h1>`),
+    `.homey-subtitle` (`<p>`, doubles as muted/hint text).
+  - Text/number/password/url input: `.homey-form-input`; select:
+    `.homey-form-select`; textarea: `.homey-form-textarea`; label:
+    `.homey-form-label`; wrapper: `.homey-form-group`.
+  - Buttons: `.homey-button-primary` (+ `-full`, `-shadow`, combinable:
+    `-shadow-full`), `.homey-button-secondary-shadow`,
+    `.homey-button-danger-shadow`, `.homey-button-transparent`, `-small`
+    modifier; state classes `.is-disabled`, `.is-loading` (or plain `disabled`).
+  - Checkbox — one or more independent choices, optionally grouped:
+
+    ```html
+    <fieldset class="homey-form-checkbox-set">
+      <legend class="homey-form-checkbox-set-title">Group title</legend>
+      <label class="homey-form-checkbox">
+        <input class="homey-form-checkbox-input" type="checkbox" />
+        <span class="homey-form-checkbox-checkmark"></span>
+        <span class="homey-form-checkbox-text">Label</span>
+      </label>
+    </fieldset>
+    ```
+
+  - Radio — mutually exclusive choice, same shape with `-radio-` in place of
+    `-checkbox-` (`.homey-form-radio-set`, `.homey-form-radio-set-title`,
+    `.homey-form-radio`, `.homey-form-radio-input`, `.homey-form-radio-checkmark`,
+    `.homey-form-radio-text`); give every `input` in the set the same `name` so
+    only one can be checked.
 
 - **Front-end `Homey` object in a pair view** (promise-based, unlike settings'
   callback-style `Homey.api`): `Homey.emit(event, data)` → `Promise<result>`,
@@ -196,6 +216,46 @@ Sources:
   view 2's `session.setHandler` for its own list event reads `this._x`. Each
   `onPair(session)` call is scoped to one pairing attempt, so this doesn't leak
   across pairing sessions.
+
+- **Don't draw your own "Next" button for a view that only navigates onward.**
+  Homey's own pairing chrome already renders Previous/Continue from that view's
+  manifest `navigation.{prev,next}` (confirmed live in this project — drawing an
+  in-page button too just duplicates it). Instead, emit the current
+  selection to the driver on every `change` (checkbox/radio), not on a click you
+  don't control, so whatever moment the user hits the native Continue the
+  driver already has it. Reserve an in-page button for a view that does real
+  work on submit (e.g. the final step calling `Homey.createDevice()`), since
+  that isn't pure navigation and has no native equivalent.
+
+- **Repair** lets a user fix an existing device's setup without deleting it.
+  Add a top-level `"repair"` array to `driver.compose.json` — same shape as
+  `"pair"` (`id`/`template`/`options`/`navigation`), views for a custom (no
+  `template`) entry live in `drivers/<id>/repair/<id>.html` (its own folder,
+  parallel to `pair/`). Confirmed against real apps — official
+  `athombv/eu.huum` (`repair` array reusing a system `template`, no custom
+  file needed) and community `bhdit/homey-tapo`
+  (`drivers/<id>/repair/repair.html`, a custom view). `homey app validate`
+  does **not** check that a custom repair view's file exists the way it does
+  for `pair` (no such check in the installed CLI's validator) — get the path
+  right by hand.
+  - Driver side: `async onRepair(session, device) { session.setHandler(...) }`
+    — same `session` API as `onPair`, plus you get the actual `device`
+    instance being repaired.
+  - **`data` (immutable identity) cannot be changed by a repair** — don't try.
+    Persist whatever the user changes into **`store`** instead
+    (`await device.setStoreValue(key, value)`), which is mutable and exactly
+    what repair is for. Design a device's constructor-time `data`/`store` split
+    up front around this: put only the identity in `data`, put anything a
+    future repair might need to change in `store`.
+  - Repaired store values take effect wherever the device's own methods read
+    them live (e.g. via `getStoreValue()`/`getStore()` called fresh each time,
+    not cached at `onInit()`) — no extra wiring needed. `athombv/eu.huum`
+    instead re-triggers `onInit()` after the repair
+    (`await device.onUninit(); await device.onInit();`) because its `onInit()`
+    caches the repaired value into a connection object; skip that dance if
+    nothing is cached.
+  - Front-end (`repair/*.html`) uses the exact same API as a pair view
+    (`Homey.emit`, `Homey.alert`, `Homey.done()`, Homey Style Library classes).
 
 ## Flow (device-scoped) usage
 

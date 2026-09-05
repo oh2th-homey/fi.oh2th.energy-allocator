@@ -45,6 +45,23 @@
   },
   "pair": [
     {
+      "id": "choose_mode",
+      "navigation": {
+        "next": "select_devices"
+      }
+    },
+    {
+      "id": "select_devices",
+      "navigation": {
+        "next": "select_counters"
+      }
+    },
+    {
+      "id": "select_counters"
+    }
+  ],
+  "repair": [
+    {
       "id": "select_devices",
       "navigation": {
         "next": "select_counters"

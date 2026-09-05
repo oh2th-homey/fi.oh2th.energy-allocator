@@ -1,0 +1,37 @@
+<form class="homey-form">
+  <h1 class="homey-title">Pairing mode</h1>
+  <p class="homey-subtitle">How should the energy counter(s) you pick next be tracked?</p>
+
+  <fieldset class="homey-form-radio-set">
+    <legend class="homey-form-radio-set-title">Mode</legend>
+
+    <label class="homey-form-radio">
+      <input class="homey-form-radio-input" type="radio" name="ea-mode" value="individual" checked />
+      <span class="homey-form-radio-checkmark"></span>
+      <span class="homey-form-radio-text">Individual devices — one allocator per counter</span>
+    </label>
+
+    <label class="homey-form-radio">
+      <input class="homey-form-radio-input" type="radio" name="ea-mode" value="summary" />
+      <span class="homey-form-radio-checkmark"></span>
+      <span class="homey-form-radio-text">Summary device — one allocator summing every counter you pick</span>
+    </label>
+  </fieldset>
+</form>
+
+<script type="text/javascript">
+  // No in-page "Next" button: this view's manifest entry has a
+  // navigation.next, so Homey's own pairing chrome renders the Continue
+  // button. Keep the driver's selection current on every change instead of
+  // waiting for a click we don't control.
+  function sendMode() {
+    const mode = document.querySelector('input[name="ea-mode"]:checked').value;
+    Homey.emit('select_mode', mode).catch((err) => Homey.alert(err.message || err));
+  }
+
+  document.querySelectorAll('input[name="ea-mode"]').forEach((input) => {
+    input.addEventListener('change', sendMode);
+  });
+
+  sendMode(); // a radio is pre-checked, so record the default immediately
+</script>

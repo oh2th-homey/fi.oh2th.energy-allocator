@@ -32,8 +32,9 @@ energy each device consumes came from the **grid**, from **PV/solar**, and from 
 **home battery** (battery source optional; could also be an EV/V2G charger).
 
 Inputs: the configured `meter_power(.x)` capabilities of the grid / PV / battery
-source devices, plus the `meter_power(.x)` capability each monitored allocator
-was paired to (see "Sources" below for exact capability handling).
+source devices, plus the `meter_power(.x)` counter(s) each monitored allocator
+was paired to — one, or several summed for a summary allocator (see "Sources"
+below for exact capability handling).
 
 Outputs (per monitored device):
 
@@ -132,29 +133,64 @@ picker is used to choose devices; for each role the user then maps the specific
 
 ### Devices / topology
 
-- Driver `device-allocation` ("Device Energy Allocation"): one allocator per
-  monitored **counter**. `data` is `{ deviceId, capability, uid }`; `uid` is a
-  random string minted at pairing time purely so `data` stays unique when the
-  same `deviceId`+`capability` is paired more than once — that's intentional,
-  not blocked, since one counter can usefully feed several allocators (e.g. for
-  different Flow purposes). `device.js` `getMonitoredCapability()` returns
-  `data.capability` (falls back to plain `meter_power` for devices paired
-  before the picker existed). Exposes `meter_power.grid/.pv/.bat` + share
-  capabilities.
-  - **Pairing is two custom stages** (not the built-in `list_devices` +
+- Driver `device-allocation` ("Device Energy Allocation"): one allocator sums
+  one or more monitored **counters** each interval (see `lib/AllocationDevice.js`
+  `getMonitoredCounters()` → `{deviceId, capability}[]`, summed by `app.js
+  tick()`). `device.js` reads the counter(s) from **`store`** (mutable, so
+  `onRepair` can change them) with two shapes:
+  - individual mode: `store = { deviceId, capability }` — one counter.
+  - summary mode: `store = { counters: [{deviceId, capability}, …] }` — several
+    counters, summed.
+
+  `data` only carries the immutable pairing identity: `{ mode, uid }`. `mode`
+  (`'individual'|'summary'`) is fixed for the device's lifetime — repair can
+  change *which* counter(s) it follows but never the mode. `uid` is a random
+  string minted at pairing time purely so `data` stays unique when the same
+  counter is paired more than once — that's intentional, not blocked, since one
+  counter can usefully feed several allocators (e.g. for different Flow
+  purposes) or belong to more than one summary device. Devices paired before
+  this `data`/`store` split existed have their counter(s) in `data` instead
+  (`{deviceId, capability}` or `{counters: […]}`, no `mode`); `device.js` falls
+  back to reading those so old devices keep working untouched until their
+  first repair, after which the repaired value lives in `store` and `mode` is
+  inferred from the old `data` shape (`getAllocationMode()`). Exposes
+  `meter_power.grid/.pv/.bat` + share capabilities.
+  - **Pairing is three custom stages** (not the built-in `list_devices` +
     `add_devices` templates — with hundreds of candidate devices in the house, a
     flat one-row-per-counter list was unusable):
-    1. `pair/select_devices.html` — filterable checkbox list of physical devices
+    Steps 1–2 only navigate onward, so they have no in-page button — Homey's
+    pairing chrome already renders Previous/Continue from their manifest
+    `navigation.next`; each emits its current selection to the driver on every
+    `change` instead, so it's up to date whenever Continue is pressed. Step 3
+    does real work (creates the device(s)) and keeps its own button.
+    1. `pair/choose_mode.html` — **individual** (one allocator per counter) vs
+       **summary** (one allocator summing every selected counter). Recorded in
+       `driver.js` `onPair()`'s closure via `select_mode`; carried to step 3
+       through the `list_counters` response, not re-asked.
+    2. `pair/select_devices.html` — filterable checkbox list of physical devices
        (any `meter_power(.x)` cap; only this app's own devices are excluded),
-       one row per **device**.
-    2. `pair/select_counters.html` — for the devices picked in step 1, a
-       checkbox list of **all** their `meter_power(.x)` counters (not just
-       unused ones), grouped per device; each checked counter becomes one
-       allocator via `Homey.createDevice()`.
+       one row per **device**. Same for both modes.
+    3. `pair/select_counters.html` — for the devices picked in step 2, a
+       checkbox list of all their `meter_power(.x)` counters, grouped per
+       device. Submit behaviour depends on the mode from step 1: individual
+       mode calls `Homey.createDevice()` once per checked counter; summary mode
+       calls it once with every checked counter in `store.counters`.
     Selection is carried from step 1 to step 2 via a closure variable in
     `driver.js` `onPair(session)` (`session.setHandler('select_source_devices', …)`
     then `session.setHandler('list_counters', …)`) — see the Pairing section of
     `docs/homey-sdk-notes.md` for the confirmed custom-pair-view API.
+  - **Repair** (`driver.js` `onRepair(session, device)`, `repair/select_devices.html`,
+    `repair/select_counters.html`) reuses the same two steps to let the user
+    reselect the counter(s), pre-checked with the device's current one(s), but
+    never shows the mode question — `select_counters` renders a single radio
+    choice for an individual-mode device or the usual checkbox-set for a
+    summary one, matching whatever `device.getAllocationMode()` already is.
+    Submitting calls `device.setStoreValue(...)`, never touching the
+    `meter_power.grid/.pv/.bat` capability values, so accumulated totals carry
+    on unchanged — only the counter(s) `app.js` reads for this device change,
+    effective on the very next sample tick (a brand-new counter simply starts
+    its delta from zero on that first tick, per the normal reset-safe baseline
+    logic — see "Counter / reset robustness" below).
 - Driver `house-allocation` ("House Energy Allocation"): one aggregate
   device representing ΔHouse from the energy balance (split into grid/pv/bat),
   independent of which loads are monitored.

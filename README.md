@@ -56,10 +56,10 @@ example, HomeWizard P1 uses `meter_power.consumed` and
 
 ## Devices
 
-| Driver              | Purpose                                                                                                  |
-| ------------------- | -------------------------------------------------------------------------------------------------------- |
-| `device-allocation` | One allocator per monitored `meter_power(.x)` counter; per-counter grid/solar/battery energy and shares. |
-| `house-allocation`  | One aggregate device for whole-home consumption (ΔHouse) from the energy balance.                        |
+| Driver              | Purpose                                                                                                                                                                                 |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `device-allocation` | One allocator per monitored `meter_power(.x)` counter, or one summary allocator that sums several counters (chosen during pairing); per-allocator grid/solar/battery energy and shares. |
+| `house-allocation`  | One aggregate device for whole-home consumption (ΔHouse) from the energy balance.                                                                                                       |
 
 ### Capabilities
 

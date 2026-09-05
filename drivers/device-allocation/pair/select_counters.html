@@ -1,23 +1,39 @@
 <style type="text/css">
-  .ea-hint { color: #888; font-size: 0.9em; margin: 0 0 12px; }
-  .ea-groups { max-height: 50vh; overflow-y: auto; margin-bottom: 16px; }
-  .ea-group { margin-bottom: 18px; }
-  .ea-group-title { font-weight: 600; margin-bottom: 6px; }
-  .ea-row { display: block; padding: 4px 0; }
-  .ea-empty { color: #888; font-size: 0.9em; padding: 12px 0; }
+  /* Homey Style Library has no scrollable-list primitive; this is the only
+     layout rule not covered by a homey-* class. */
+  .ea-scroll { max-height: 50vh; overflow-y: auto; }
 </style>
 
-<p class="ea-hint">
-  Choose which energy counter(s) to add. Each one becomes its own allocator
-  device.
-</p>
-<div class="ea-groups" id="ea-groups"></div>
-<button class="homey-button-primary-full" type="button" id="ea-add" disabled>Add devices</button>
+<form class="homey-form">
+  <h1 class="homey-title">Select counters</h1>
+  <p class="homey-subtitle" id="ea-hint">Choose which energy counter(s) to add.</p>
+
+  <div class="ea-scroll" id="ea-groups"></div>
+
+  <button class="homey-button-primary-full" type="button" id="ea-add" disabled>Add</button>
+</form>
 
 <script type="text/javascript">
+  let MODE = 'individual';
+
+  function makeUid() {
+    // Makes `data` unique even when the same deviceId+capability is paired
+    // more than once, or across several counters summed into one device -
+    // allowed, since one counter can feed several allocators for different
+    // purposes.
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
   function updateAddState() {
     const anyChecked = document.querySelectorAll('#ea-groups input:checked').length > 0;
     document.getElementById('ea-add').disabled = !anyChecked;
+  }
+
+  function applyModeText() {
+    document.getElementById('ea-hint').textContent = MODE === 'summary'
+      ? 'Choose which energy counter(s) to sum into one summary device.'
+      : 'Choose which energy counter(s) to add. Each one becomes its own allocator device.';
+    document.getElementById('ea-add').textContent = MODE === 'summary' ? 'Add summary device' : 'Add devices';
   }
 
   function renderGroups(groups) {
@@ -25,23 +41,23 @@
     container.innerHTML = '';
 
     if (!groups || groups.length === 0) {
-      container.innerHTML = '<p class="ea-empty">No energy counters found on the selected devices.</p>';
+      container.innerHTML = '<p class="homey-subtitle">No energy counters found on the selected devices.</p>';
       return;
     }
 
     for (const group of groups) {
       const title = group.zone ? `${group.name} (${group.zone})` : group.name;
 
-      const wrap = document.createElement('div');
-      wrap.className = 'ea-group';
-      wrap.innerHTML = '<div class="ea-group-title"></div>';
-      wrap.querySelector('.ea-group-title').textContent = title;
+      const fieldset = document.createElement('fieldset');
+      fieldset.className = 'homey-form-checkbox-set';
+      fieldset.innerHTML = '<legend class="homey-form-checkbox-set-title"></legend>';
+      fieldset.querySelector('legend').textContent = title;
 
       for (const cap of group.capabilities) {
         const row = document.createElement('label');
-        row.className = 'homey-form-checkbox ea-row';
+        row.className = 'homey-form-checkbox';
         row.innerHTML = ''
-          + `<input class="homey-form-checkbox-input" type="checkbox" />`
+          + '<input class="homey-form-checkbox-input" type="checkbox" />'
           + '<span class="homey-form-checkbox-checkmark"></span>'
           + '<span class="homey-form-checkbox-text"></span>';
         row.querySelector('.homey-form-checkbox-text').textContent = cap.title;
@@ -52,9 +68,9 @@
         input.dataset.name = group.multiple ? `${title} (${cap.title}) allocation` : `${title} allocation`;
         input.addEventListener('change', updateAddState);
 
-        wrap.appendChild(row);
+        fieldset.appendChild(row);
       }
-      container.appendChild(wrap);
+      container.appendChild(fieldset);
     }
   }
 
@@ -64,15 +80,27 @@
 
     Homey.showLoadingOverlay();
     try {
-      for (const input of checked) {
-        // `uid` makes `data` unique even when the same deviceId+capability is
-        // paired more than once (allowed - one counter can feed several
-        // allocators for different purposes).
-        const uid = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+      // Counter selection goes in `store` (mutable - `onRepair` can change it
+      // later); `data` only carries the immutable identity: `uid` and the
+      // fixed pairing `mode`.
+      if (MODE === 'summary') {
+        const counters = checked.map((input) => ({
+          deviceId: input.dataset.deviceId,
+          capability: input.dataset.capability,
+        }));
         await Homey.createDevice({
-          name: input.dataset.name,
-          data: { deviceId: input.dataset.deviceId, capability: input.dataset.capability, uid },
+          name: 'Summary allocation',
+          data: { mode: 'summary', uid: makeUid() },
+          store: { counters },
         });
+      } else {
+        for (const input of checked) {
+          await Homey.createDevice({
+            name: input.dataset.name,
+            data: { mode: 'individual', uid: makeUid() },
+            store: { deviceId: input.dataset.deviceId, capability: input.dataset.capability },
+          });
+        }
       }
       Homey.done();
     } catch (err) {
@@ -83,9 +111,11 @@
 
   Homey.showLoadingOverlay();
   Homey.emit('list_counters', null)
-    .then((groups) => {
+    .then((result) => {
       Homey.hideLoadingOverlay();
-      renderGroups(groups);
+      MODE = (result && result.mode) || 'individual';
+      applyModeText();
+      renderGroups(result && result.groups);
     })
     .catch((err) => {
       Homey.hideLoadingOverlay();

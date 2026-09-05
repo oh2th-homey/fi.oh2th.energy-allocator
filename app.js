@@ -158,15 +158,18 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
       addRead(src.deviceId, src.dischargeCapability);
     }
 
-    /** @type {Map<object, {key:string}>} consumer -> monitored read */
+    /** @type {Map<object, {key:string}[]>} consumer -> its monitored reads (summed) */
     const monitoredReads = new Map();
     for (const consumer of this.consumers) {
-      const monitoredId = consumer.getMonitoredDeviceId();
-      if (!monitoredId) continue;
-      const cap = consumer.getMonitoredCapability();
-      const rec = { key: this._key(monitoredId, cap), deviceId: monitoredId, capability: cap };
-      monitoredReads.set(consumer, rec);
-      reads.push(rec);
+      const counters = consumer.getMonitoredCounters();
+      if (!counters || counters.length === 0) continue;
+      const recs = counters.map((c) => ({
+        key: this._key(c.deviceId, c.capability),
+        deviceId: c.deviceId,
+        capability: c.capability,
+      }));
+      monitoredReads.set(consumer, recs);
+      reads.push(...recs);
     }
 
     // Read every needed value; if any is missing, skip this tick and keep the
@@ -252,7 +255,7 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
       try {
         const monitored = monitoredReads.get(consumer);
         if (monitored) {
-          const deviceDelta = delta.get(monitored.key) || 0;
+          const deviceDelta = monitored.reduce((sum, rec) => sum + (delta.get(rec.key) || 0), 0);
           const allocation = deviceDelta > 0 ? attribute(deviceDelta, split) : { grid: 0, pv: 0, bat: 0, total: 0 };
           await consumer.applyAllocation(allocation);
         } else {

@@ -1,0 +1,112 @@
+<style type="text/css">
+  /* Homey Style Library has no scrollable-list primitive; this is the only
+     layout rule not covered by a homey-* class. */
+  .ea-scroll { max-height: 50vh; overflow-y: auto; }
+</style>
+
+<form class="homey-form">
+  <h1 class="homey-title">Select counters</h1>
+  <p class="homey-subtitle" id="ea-hint">Choose which energy counter(s) this device should track.</p>
+
+  <div class="ea-scroll" id="ea-groups"></div>
+
+  <button class="homey-button-primary-full" type="button" id="ea-save" disabled>Save</button>
+</form>
+
+<script type="text/javascript">
+  // Unlike pairing, this repairs ONE existing device, so the mode (fixed,
+  // decided at pairing time) decides the input type: individual mode picks
+  // exactly one counter (radio, shared name across every group), summary mode
+  // picks one or more (checkbox, as in pairing).
+  let MODE = 'individual';
+
+  function updateSaveState() {
+    const anyChecked = document.querySelectorAll('#ea-groups input:checked').length > 0;
+    document.getElementById('ea-save').disabled = !anyChecked;
+  }
+
+  function applyModeText() {
+    document.getElementById('ea-hint').textContent = MODE === 'summary'
+      ? 'Choose which energy counter(s) this summary device should sum. The pairing mode itself cannot be changed here.'
+      : 'Choose the one energy counter this device should track. The pairing mode itself cannot be changed here.';
+  }
+
+  function renderGroups(groups) {
+    const container = document.getElementById('ea-groups');
+    container.innerHTML = '';
+
+    if (!groups || groups.length === 0) {
+      container.innerHTML = '<p class="homey-subtitle">No energy counters found on the selected devices.</p>';
+      return;
+    }
+
+    const inputType = MODE === 'summary' ? 'checkbox' : 'radio';
+    const setClass = MODE === 'summary' ? 'homey-form-checkbox-set' : 'homey-form-radio-set';
+    const setTitleClass = MODE === 'summary' ? 'homey-form-checkbox-set-title' : 'homey-form-radio-set-title';
+    const labelClass = MODE === 'summary' ? 'homey-form-checkbox' : 'homey-form-radio';
+    const inputClass = MODE === 'summary' ? 'homey-form-checkbox-input' : 'homey-form-radio-input';
+    const checkmarkClass = MODE === 'summary' ? 'homey-form-checkbox-checkmark' : 'homey-form-radio-checkmark';
+    const textClass = MODE === 'summary' ? 'homey-form-checkbox-text' : 'homey-form-radio-text';
+
+    for (const group of groups) {
+      const title = group.zone ? `${group.name} (${group.zone})` : group.name;
+
+      const fieldset = document.createElement('fieldset');
+      fieldset.className = setClass;
+      fieldset.innerHTML = `<legend class="${setTitleClass}"></legend>`;
+      fieldset.querySelector('legend').textContent = title;
+
+      for (const cap of group.capabilities) {
+        const row = document.createElement('label');
+        row.className = labelClass;
+        row.innerHTML = ''
+          + `<input class="${inputClass}" type="${inputType}"${MODE === 'individual' ? ' name="ea-counter"' : ''} />`
+          + `<span class="${checkmarkClass}"></span>`
+          + `<span class="${textClass}"></span>`;
+        row.querySelector(`.${textClass}`).textContent = cap.title;
+
+        const input = row.querySelector('input');
+        input.dataset.deviceId = group.deviceId;
+        input.dataset.capability = cap.id;
+        input.checked = !!cap.selected;
+        input.addEventListener('change', updateSaveState);
+
+        fieldset.appendChild(row);
+      }
+      container.appendChild(fieldset);
+    }
+
+    updateSaveState();
+  }
+
+  document.getElementById('ea-save').addEventListener('click', async () => {
+    const checked = Array.from(document.querySelectorAll('#ea-groups input:checked'));
+    if (checked.length === 0) return;
+
+    Homey.showLoadingOverlay();
+    try {
+      const payload = MODE === 'summary'
+        ? { counters: checked.map((input) => ({ deviceId: input.dataset.deviceId, capability: input.dataset.capability })) }
+        : { deviceId: checked[0].dataset.deviceId, capability: checked[0].dataset.capability };
+
+      await Homey.emit('apply_repair', payload);
+      Homey.done();
+    } catch (err) {
+      Homey.hideLoadingOverlay();
+      Homey.alert(err.message || err);
+    }
+  });
+
+  Homey.showLoadingOverlay();
+  Homey.emit('list_counters', null)
+    .then((result) => {
+      Homey.hideLoadingOverlay();
+      MODE = (result && result.mode) || 'individual';
+      applyModeText();
+      renderGroups(result && result.groups);
+    })
+    .catch((err) => {
+      Homey.hideLoadingOverlay();
+      Homey.alert(err.message || err);
+    });
+</script>
