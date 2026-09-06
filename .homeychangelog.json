@@ -13,5 +13,8 @@
   },
   "0.2.0": {
     "en": "Cleanup documentation. Fine tune functionality"
+  },
+  "0.2.1": {
+    "en": "ADD: Insights for measure_grid_share and measure_self_sufficiency"
   }
 }
