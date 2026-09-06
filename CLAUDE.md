@@ -55,6 +55,13 @@ Outputs (per monitored device):
 - share capabilities (`measure_grid_share`, `measure_self_sufficiency`)
 
 Requires the `homey:manager:api` permission to enumerate and read other apps' devices.
+**Invariant: this app only ever reads via `homeyApi`** (`.devices.getDevices()`,
+`.zones.getZones()`) - it must never call a mutating method (`setCapabilityValue`,
+`setSettings`, `.connect()` + capability-instance writes, etc.) on a device object
+sourced from `homeyApi`. `setCapabilityValue()` calls are only ever valid on `this`
+inside `AllocationDevice` (the app's own devices). A future feature that needs to
+control another device would require a different, explicitly-scoped permission and
+should be treated as a deliberate design decision, not an incidental addition.
 
 ## Homey capability semantics
 
