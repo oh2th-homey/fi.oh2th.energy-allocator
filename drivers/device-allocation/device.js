@@ -1,17 +1,14 @@
 'use strict';
 
-const AllocationDevice = require('../../lib/AllocationDevice');
+const AllocationDevice = require('../AllocationDevice');
 
 module.exports = class DeviceAllocationDevice extends AllocationDevice {
 
   /**
-   * Monitored-counter state lives in **store** (mutable, so `driver.js`
-   * `onRepair` can change it later) - `data` only carries the immutable
-   * pairing identity: `uid` and `mode` (`individual` | `summary`, fixed for
-   * the device's lifetime; repair cannot change it). Devices paired before
-   * this existed have their counter(s) in `data` instead, read here as a
-   * fallback so they keep working untouched until their first repair, after
-   * which the repaired value lives in `store` and takes over.
+   * Reads the monitored counter(s) from `store` (mutable, set by `driver.js`
+   * `onRepair`), falling back to `data` for devices paired before the
+   * `store`/`data` split existed.
+   * @returns {{deviceId:string, capability:string}[]}
    */
   getMonitoredCounters() {
     const store = this.getStore();
@@ -33,26 +30,23 @@ module.exports = class DeviceAllocationDevice extends AllocationDevice {
   }
 
   /**
-   * Which pairing mode this device was created in - fixed for its lifetime,
-   * `onRepair` only ever changes the counter selection, never this.
+   * Pairing mode this device was created in. Fixed for the device's
+   * lifetime; `onRepair` changes only the counter selection.
    * @returns {'individual'|'summary'}
    */
   getAllocationMode() {
     const data = this.getData();
     if (data.mode === 'summary' || data.mode === 'individual') return data.mode;
 
-    // Devices paired before `data.mode` existed: infer it from the data shape.
     const store = this.getStore();
     if (Array.isArray(store.counters) || Array.isArray(data.counters)) return 'summary';
     return 'individual';
   }
 
   /**
-   * `meter_power.total` - the running total allocated to this device, i.e.
-   * `meter_power.grid + .pv + .bat` (individual mode: effectively a mirror of
-   * the one monitored counter; summary mode: the combined total of every
-   * counter it sums). Not on `house-allocation` - see
-   * {@link AllocationDevice#_extraStaticCaps}.
+   * Adds `meter_power.total`, the running total allocated to this device
+   * (`meter_power.grid + .pv + .bat`).
+   * @returns {string[]}
    */
   _extraStaticCaps() {
     return ['meter_power.total'];

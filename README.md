@@ -8,13 +8,11 @@ To do this, it needs permission to manage other devices, so it can read their en
 
 ## How it works
 
-Every 5 minutes, the app reads your grid, solar, and battery meters, plus the meters of the devices you're following. It compares how much each one changed since the last reading, and uses that to work out how much of the house's energy came from the grid, from solar, and from the battery. Each followed device then gets the same split.
-
-This is based on one simple rule: energy in must equal energy out.
+Every 5 minutes, the app reads your grid, solar, and battery meters, plus the meters of the devices you're following, and splits each device's usage the same way the house's energy balances:
 
     solar + grid import + battery discharge = house use + grid export + battery charge
 
-If a meter looks like it was reset, or the numbers don't add up, the app skips that one reading instead of guessing, and carries on normally with the next one.
+If a meter looks reset, the numbers don't add up, or Homey or the app restarts mid-interval, that reading is skipped rather than guessed. Cumulative totals can then lag very slightly behind reality, but the Grid allocation / Self-sufficiency percentages aren't affected, since they're smoothed and self-correcting.
 
 ## What you need
 
@@ -38,10 +36,10 @@ If a meter looks like it was reset, or the numbers don't add up, the app skips t
 Each device shows:
 
 - Its **grid**, **solar**, and **battery** energy (kWh), plus a **total** (Device Energy Allocation only).
-- **Grid allocation** and **Self-sufficiency** (%) - smoothed over about 25 minutes so they don't jump around.
-- An **"Energy allocation changed"** Flow trigger, and a button to reset a device's counters to zero.
-
-These numbers don't show up in Homey's own Energy tab. That's on purpose - they're estimates based on meters Homey already counts, so showing them again would count that energy twice.
+- **Grid allocation** and **Self-sufficiency** (%) - what share of a device's energy over the last 30 minutes came from the grid versus from solar and/or the battery. Self-sufficiency is just 100% minus Grid allocation; both are smoothed over that window so they don't jump around.
+- An **"Energy allocation changed"** Flow trigger.
+- A **"Reset allocation meters"** maintenance action (in the device's menu) to set its counters back to zero.
+- **Repair** (also in the device's menu) to change which meter(s) it follows without losing its totals.
 
 ## Useful links
 

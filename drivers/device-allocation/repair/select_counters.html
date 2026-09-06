@@ -8,10 +8,9 @@
 </form>
 
 <script type="text/javascript">
-  // Unlike pairing, this repairs ONE existing device, so the mode (fixed,
-  // decided at pairing time) decides the input type: individual mode picks
-  // exactly one counter (radio, shared name across every group), summary mode
-  // picks one or more (checkbox, as in pairing).
+  // MODE (fixed at pairing) selects the input type: individual mode uses a
+  // radio (one counter, shared name across groups); summary mode uses
+  // checkboxes (one or more).
   let MODE = 'individual';
 
   function updateSaveState() {
@@ -43,10 +42,8 @@
     for (const group of groups) {
       const title = group.zone ? `${group.name} (${group.zone})` : group.name;
 
-      // .homey-form-fieldset + .homey-form-legend renders as a proper heading
-      // (unlike .homey-form-checkbox-set-title, a muted caption) - the device
-      // name here is identifying information, not a subordinate hint. Same
-      // wrapper regardless of mode; only the input type below differs.
+      // .homey-form-fieldset + .homey-form-legend renders the device name as a
+      // heading, regardless of mode; only the input type below differs.
       const fieldset = document.createElement('fieldset');
       fieldset.className = 'homey-form-fieldset';
       fieldset.innerHTML = '<legend class="homey-form-legend"></legend>';

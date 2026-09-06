@@ -1,4 +1,4 @@
-# Energy Allocator — Homey App
+# Energy Allocator - Homey App
 
 ## Status
 
@@ -10,7 +10,7 @@
 - Homey Apps SDK guide: <https://apps.developer.homey.app/>
 - Homey Apps SDK v3 JavaScript reference: <https://apps-sdk-v3.developer.homey.app/>
 - **Cached SDK facts / gotchas: [docs/homey-sdk-notes.md](docs/homey-sdk-notes.md)**
-  — read this before touching compose files, the API, pairing, flow, or icons.
+  - read this before touching compose files, the API, pairing, flow, or icons.
 
 ## App identity
 
@@ -23,13 +23,18 @@
   no feature/Flow lists, no changelog), 1–2 short paragraphs. Localized as
   `README.<lang>.txt`. `app.json` `description` is a separate catchy one-liner that
   must not repeat the app name or readme text. `README.md` is not used by Homey
-  either, but is deliberately **user-facing** (not developer/architecture docs —
-  that's this file): it doubles as the source for the app's
-  [community forum topic](https://community.homey.app/t/app-pro-energy-allocator/159148),
-  laid out as four `## Post N` sections meant to be copied verbatim into that
-  topic's first four posts (overview, FAQ, TODO, known issues). Keep it in that
-  voice and structure when it needs updating, and mirror any user-relevant
-  change there (e.g. a new capability, a changed default) into the matching post.
+  either, but is deliberately **user-facing** (not developer/architecture docs -
+  that's this file): together with `FAQ.md`, `TODO.md`, and `KNOWN_ISSUES.md`, it
+  is the source for the app's
+  [community forum topic](https://community.homey.app/t/app-pro-energy-allocator/159148)'s
+  first four posts - one file per post (overview, FAQ, TODO, known issues), meant
+  to be copied verbatim into that post. `FAQ.md` uses Discourse's
+  `[details="question"] answer [/details]` BBCode for each entry (collapsible on
+  the forum); embedded double quotes in a question go to single quotes since
+  they'd otherwise close the `[details="..."]` attribute early. Keep these files
+  in that voice and structure when they need updating, and mirror any
+  user-relevant change (e.g. a new capability, a changed default) into the
+  matching file/post.
 
 ## Goal
 
@@ -39,12 +44,12 @@ energy each device consumes came from the **grid**, from **PV/solar**, and from 
 
 Inputs: the configured `meter_power(.x)` capabilities of the grid / PV / battery
 source devices, plus the `meter_power(.x)` counter(s) each monitored allocator
-was paired to — one, or several summed for a summary allocator (see "Sources"
+was paired to - one, or several summed for a summary allocator (see "Sources"
 below for exact capability handling).
 
 Outputs (per monitored device):
 
-- `meter_power.total` (device-allocation only — grid+pv+bat combined),
+- `meter_power.total` (device-allocation only - grid+pv+bat combined),
   `meter_power.grid`, `meter_power.pv`, and (when battery configured)
   `meter_power.bat`
 - share capabilities (`measure_grid_share`, `measure_self_sufficiency`)
@@ -53,10 +58,10 @@ Requires the `homey:manager:api` permission to enumerate and read other apps' de
 
 ## Homey capability semantics
 
-- `meter_power` (kWh, cumulative) is **always monotonic non-decreasing** — never
+- `meter_power` (kWh, cumulative) is **always monotonic non-decreasing** - never
   signed. Direction (import vs. export, charge vs. discharge) is carried by
   **separate** capabilities/sub-capabilities, not by sign.
-- Allocation uses **kWh counters only** — `meter_power(.x)`. `measure_power` (W) is
+- Allocation uses **kWh counters only** - `meter_power(.x)`. `measure_power` (W) is
   not used for allocation (kWh counters are more reliable end-to-end from source to
   consumer).
 - Direction capability ids are **not standardized**. Older drivers (e.g. HomeWizard
@@ -67,14 +72,14 @@ Requires the `homey:manager:api` permission to enumerate and read other apps' de
 ## Capability strategy
 
 Prefer **standard** Homey capabilities (and their sub-capabilities) wherever
-possible — they bring sensible defaults for icons, units, Insights and Flow
+possible - they bring sensible defaults for icons, units, Insights and Flow
 cards. Only define custom capabilities where no standard one fits.
 
 - Energy outputs use standard `meter_power` sub-capabilities: `meter_power.total`
-  (device-allocation only — the monitored counter(s)' combined total, i.e.
+  (device-allocation only - the monitored counter(s)' combined total, i.e.
   exactly `grid + pv + bat`), `meter_power.grid`, `meter_power.pv`,
   `meter_power.bat`. No bare `meter_power` and no `energy` object on **either**
-  driver — deliberately keeps these synthetic figures out of Homey Energy so
+  driver - deliberately keeps these synthetic figures out of Homey Energy so
   they can't double-count the real meters they're derived from (a
   device-allocation device mirrors/sums other devices' own already-counted
   `meter_power`; a bare `meter_power` + `energy` object would enroll it as an
@@ -82,7 +87,7 @@ cards. Only define custom capabilities where no standard one fits.
   twice). Homey's built-in "Exclude from Energy" device setting can't be set
   from app code as a belt-and-braces measure: the SDK docs reserve the
   `energy_` setting-id prefix for Homey itself, and `setSettings({
-  energy_exclude: true })` from device code has no effect — confirmed by
+  energy_exclude: true })` from device code has no effect - confirmed by
   testing. If a paired device still shows up in the Energy tab despite having
   no bare `meter_power`/`energy` object, excluding it is a manual, one-time
   step for the user in that device's Advanced Settings.
@@ -92,8 +97,8 @@ cards. Only define custom capabilities where no standard one fits.
   capabilities using the `measure_` prefix (instantaneous measurement, matching
   Homey convention; generic names, no app-specific wording so other apps/devices
   can adopt them):
-  - `measure_grid_share` — number, `%`, 0–100, `uiComponent: sensor`, own icon.
-  - `measure_self_sufficiency` — same shape.
+  - `measure_grid_share` - number, `%`, 0–100, `uiComponent: sensor`, own icon.
+  - `measure_self_sufficiency` - same shape.
 
 ## Method
 
@@ -120,7 +125,7 @@ picker is used to choose devices; for each role the user then maps the specific
 `meter_power` / `meter_power.*` capability that device exposes.
 
 - **Grid**: exactly ONE grid meter device. User maps the imported-energy capability
-  (required) and the exported-energy capability (**optional** — unset ⇒ export = 0).
+  (required) and the exported-energy capability (**optional** - unset ⇒ export = 0).
   Any id is allowed (`meter_power`, `.consumed`/`.returned`, `.imported`/`.exported`, …).
 - **PV**: one or more devices, each a single monotonic production `meter_power(.x)`;
   deltas summed.
@@ -128,7 +133,7 @@ picker is used to choose devices; for each role the user then maps the specific
   a monotonic charge-energy and discharge-energy capability (**both required**);
   deltas summed across devices.
 
-### Counter / reset robustness (critical — meters reset at any time)
+### Counter / reset robustness (critical - meters reset at any time)
 
 - Every tracked counter (each source device AND each monitored device) keeps its
   own stored baseline.
@@ -147,8 +152,8 @@ picker is used to choose devices; for each role the user then maps the specific
   reporting `meter_power` to 0.1 kWh) barely move over a short interval at low
   power, which produced a stream of zero-delta "skipped" intervals. The only
   user-tunable number left is the Flow trigger threshold.
-- Share values: smoothed over a trailing window of `SMOOTHING_INTERVALS` (5)
-  sample intervals = 25 min. Also fixed. `_smoothingMs()` in
+- Share values: smoothed over a trailing window of `SMOOTHING_INTERVALS` (6)
+  sample intervals = 30 min. Also fixed. `_smoothingMs()` in
   `lib/AllocationDevice.js` = `SAMPLE_INTERVAL_SECONDS × SMOOTHING_INTERVALS`.
 
 ### Devices / topology
@@ -158,15 +163,15 @@ picker is used to choose devices; for each role the user then maps the specific
   `getMonitoredCounters()` → `{deviceId, capability}[]`, summed by `app.js
   tick()`). `device.js` reads the counter(s) from **`store`** (mutable, so
   `onRepair` can change them) with two shapes:
-  - individual mode: `store = { deviceId, capability }` — one counter.
-  - summary mode: `store = { counters: [{deviceId, capability}, …] }` — several
+  - individual mode: `store = { deviceId, capability }` - one counter.
+  - summary mode: `store = { counters: [{deviceId, capability}, …] }` - several
     counters, summed.
 
   `data` only carries the immutable pairing identity: `{ mode, uid }`. `mode`
-  (`'individual'|'summary'`) is fixed for the device's lifetime — repair can
+  (`'individual'|'summary'`) is fixed for the device's lifetime - repair can
   change *which* counter(s) it follows but never the mode. `uid` is a random
   string minted at pairing time purely so `data` stays unique when the same
-  counter is paired more than once — that's intentional, not blocked, since one
+  counter is paired more than once - that's intentional, not blocked, since one
   counter can usefully feed several allocators (e.g. for different Flow
   purposes) or belong to more than one summary device. Devices paired before
   this `data`/`store` split existed have their counter(s) in `data` instead
@@ -176,41 +181,41 @@ picker is used to choose devices; for each role the user then maps the specific
   inferred from the old `data` shape (`getAllocationMode()`). Exposes
   `meter_power.grid/.pv/.bat` + share capabilities.
   - **Pairing is three custom stages** (not the built-in `list_devices` +
-    `add_devices` templates — with hundreds of candidate devices in the house, a
+    `add_devices` templates - with hundreds of candidate devices in the house, a
     flat one-row-per-counter list was unusable):
-    Steps 1–2 only navigate onward, so they have no in-page button — Homey's
+    Steps 1–2 only navigate onward, so they have no in-page button - Homey's
     pairing chrome already renders Previous/Continue from their manifest
     `navigation.next`; each emits its current selection to the driver on every
     `change` instead, so it's up to date whenever Continue is pressed. Step 3
     does real work (creates the device(s)) and keeps its own button.
-    1. `pair/choose_mode.html` — **individual** (one allocator per counter) vs
+    1. `pair/choose_mode.html` - **individual** (one allocator per counter) vs
        **summary** (one allocator summing every selected counter). Recorded in
        `driver.js` `onPair()`'s closure via `select_mode`; carried to step 3
        through the `list_counters` response, not re-asked.
-    2. `pair/select_devices.html` — filterable checkbox list of physical devices
+    2. `pair/select_devices.html` - filterable checkbox list of physical devices
        (any `meter_power(.x)` cap; only this app's own devices are excluded),
        one row per **device**. Same for both modes.
-    3. `pair/select_counters.html` — for the devices picked in step 2, a
+    3. `pair/select_counters.html` - for the devices picked in step 2, a
        checkbox list of all their `meter_power(.x)` counters, grouped per
        device. Submit behaviour depends on the mode from step 1: individual
        mode calls `Homey.createDevice()` once per checked counter; summary mode
        calls it once with every checked counter in `store.counters`.
     Selection is carried from step 1 to step 2 via a closure variable in
     `driver.js` `onPair(session)` (`session.setHandler('select_source_devices', …)`
-    then `session.setHandler('list_counters', …)`) — see the Pairing section of
+    then `session.setHandler('list_counters', …)`) - see the Pairing section of
     `docs/homey-sdk-notes.md` for the confirmed custom-pair-view API.
   - **Repair** (`driver.js` `onRepair(session, device)`, `repair/select_devices.html`,
     `repair/select_counters.html`) reuses the same two steps to let the user
     reselect the counter(s), pre-checked with the device's current one(s), but
-    never shows the mode question — `select_counters` renders a single radio
+    never shows the mode question - `select_counters` renders a single radio
     choice for an individual-mode device or the usual checkbox-set for a
     summary one, matching whatever `device.getAllocationMode()` already is.
     Submitting calls `device.setStoreValue(...)`, never touching the
     `meter_power.total/.grid/.pv/.bat` capability values, so accumulated totals carry
-    on unchanged — only the counter(s) `app.js` reads for this device change,
+    on unchanged - only the counter(s) `app.js` reads for this device change,
     effective on the very next sample tick (a brand-new counter simply starts
     its delta from zero on that first tick, per the normal reset-safe baseline
-    logic — see "Counter / reset robustness" below).
+    logic - see "Counter / reset robustness" below).
 - Driver `house-allocation` ("House Energy Allocation"): one aggregate
   device representing ΔHouse from the energy balance (split into grid/pv/bat),
   independent of which loads are monitored.
@@ -220,7 +225,7 @@ picker is used to choose devices; for each role the user then maps the specific
 Both drivers expose `meter_power.grid`, `measure_grid_share`,
 `measure_self_sufficiency`, `button.reset_meter` always, plus `meter_power.pv` /
 `meter_power.bat` **dynamically**. `device-allocation` additionally exposes
-`meter_power.total` (grid+pv+bat combined) always — `house-allocation` doesn't,
+`meter_power.total` (grid+pv+bat combined) always - `house-allocation` doesn't,
 to avoid double-counting (see "Capability strategy" above).
 
 - Grid is mandatory, so `meter_power.grid` + the shares + the reset button are
@@ -238,7 +243,7 @@ to avoid double-counting (see "Capability strategy" above).
   drives this from every config change (`settings.on('set')` and `setConfig()`),
   and each device also re-syncs in `onInit()`.
 - Re-adding a dynamic capability appends it after `button.reset_meter` in the UI
-  (Homey has no reorder API) — cosmetic only. Removing it also drops its stored
+  (Homey has no reorder API) - cosmetic only. Removing it also drops its stored
   total and Insights history; a later re-add starts the counter from 0.
 - Cumulative counters otherwise run forever like a real meter.
 
@@ -246,11 +251,11 @@ to avoid double-counting (see "Capability strategy" above).
 
 - Interval where ΔHouse ≤ 0 but a monitored device shows consumption (inconsistent
   balance): **skip the whole interval's allocation** and re-baseline, same as a
-  counter reset. The 5-interval share smoothing absorbs the occasional dropped
+  counter reset. The 6-interval share smoothing absorbs the occasional dropped
   interval; the next interval is expected to be consistent.
 - Consequence: skipped intervals are lost from the cumulative
   `meter_power.grid/.pv/.bat` totals, so they can slightly under-count over long
-  runs. Accepted — shares are the primary metric.
+  runs. Accepted - shares are the primary metric.
 
 ### Configuration scope
 
@@ -266,7 +271,7 @@ Defined **app-wide** in `.homeycompose/flow/` (not per-driver), with a manual
 the card offers devices from either driver. Still a device Flow card (any card
 with a `device` arg is), accessed via `getDeviceTriggerCard`.
 
-- `.homeycompose/flow/triggers/grid_share_changed.json` — **grid share changed**:
+- `.homeycompose/flow/triggers/grid_share_changed.json` - **grid share changed**:
   fires when the smoothed grid share moves more than `shareChangeThreshold` points
   since last fire; tokens `grid_share`, `self_sufficiency`. Fired per device from
   `lib/AllocationDevice._maybeTriggerShareChanged()`.
@@ -278,23 +283,23 @@ purpose-built card.
 
 ## Build layout
 
-- `app.js` — `EnergyAllocatorApp`: holds config, the consumer registry, and the
+- `app.js` - `EnergyAllocatorApp`: holds config, the consumer registry, and the
   sampling loop (`tick()`); exposes `getMeterDevices()` for the settings page and
   `device-allocation` pairing. `getMeterDevices()` filters out this app's own
   allocator devices (matched by `ownerUri` / `driverId` against
   `homey:app:<manifest.id>`) so their synthetic `meter_power.*` output can't be
-  selected as a grid/PV/battery source or monitored — that would create a loop.
-- `api.js` — `getMeterDevices` / `getConfig` / `putConfig`.
-- `lib/allocation.js` — pure `computeHouseSplit()` + `attribute()` (unit-tested by
+  selected as a grid/PV/battery source or monitored - that would create a loop.
+- `api.js` - `getMeterDevices` / `getConfig` / `putConfig`.
+- `lib/allocation.js` - pure `computeHouseSplit()` + `attribute()` (unit-tested by
   eye; see the priority-drain algorithm).
-- `lib/SmoothingWindow.js` — trailing-window energy sums → shares.
-- `lib/AllocationDevice.js` — shared device behaviour; subclassed by both drivers,
+- `lib/SmoothingWindow.js` - trailing-window energy sums → shares.
+- `lib/AllocationDevice.js` - shared device behaviour; subclassed by both drivers,
   which only differ in `getMonitoredDeviceId()`.
-- `settings/index.html` — source configuration UI.
+- `settings/index.html` - source configuration UI.
 
 ### Known v1 limitations / TODO
 
-- Baselines live in memory only — an app restart drops the in-flight interval
+- Baselines live in memory only - an app restart drops the in-flight interval
   (acceptable per the reset policy).
 - `homey app run` on hardware not yet done.
 - **Unverified**: whether a device with only `meter_power.<sub>` sub-capabilities
@@ -303,8 +308,8 @@ purpose-built card.
   usage"/energy-object machinery while still being counted. The "Exclude from
   Energy" toggle showing up in Advanced Settings for these devices at all hints
   Homey may track them by capability family regardless of the missing `energy`
-  object — needs confirming on hardware once `homey app run` happens.
-- Placeholder art (`assets/`, `drivers/*/assets/`) — black-on-transparent bar/pie
+  object - needs confirming on hardware once `homey app run` happens.
+- Placeholder art (`assets/`, `drivers/*/assets/`) - black-on-transparent bar/pie
   motifs; replace before publishing.
 
 ### Review findings (for future agent work)

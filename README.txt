@@ -1,13 +1,8 @@
-Your home pulls energy from several places at the same time - the grid, your
-solar panels and a home battery - and every appliance quietly consumes a mix
-of all of them. Energy Allocator uses the energy meters you already have to
-estimate that mix, so you can see where a device's energy actually came from.
+Your home draws energy from the grid, solar panels and a home battery, often
+all at once. Energy Allocator uses the meters you already have to work out
+how much of each device's energy came from each source.
 
-Choose your grid, solar and battery meters in the app settings, then pick the
-devices you want to follow. Energy Allocator keeps comparing their meter
-readings and splits each device's consumption into grid, solar and battery
-energy, and shows how large the grid share is and how self-sufficient that
-device really runs. A whole-home device is available too, for the complete
-picture of your household.
-
-See the community forum topic for discussions and support.
+Pick your grid, solar and battery meters in the app settings, then choose which
+devices to follow. The app splits each device's energy into grid, solar and
+battery, and shows its grid share and self-sufficiency - plus a whole-home
+device for the same picture across your household.

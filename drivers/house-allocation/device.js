@@ -1,10 +1,13 @@
 'use strict';
 
-const AllocationDevice = require('../../lib/AllocationDevice');
+const AllocationDevice = require('../AllocationDevice');
 
 module.exports = class HouseAllocationDevice extends AllocationDevice {
 
-  /** The whole-house device receives the house split directly, not via monitored counters. */
+  /**
+   * @returns {{deviceId:string, capability:string}[]} always empty; the
+   * whole-house device receives the house split directly.
+   */
   getMonitoredCounters() {
     return [];
   }

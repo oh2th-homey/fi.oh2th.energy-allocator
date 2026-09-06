@@ -16,7 +16,7 @@ const DEFAULT_CONFIG = {
 
 module.exports = class EnergyAllocatorApp extends Homey.App {
   async onInit() {
-    /** @type {Set<import('./lib/AllocationDevice')>} */
+    /** @type {Set<import('./drivers/AllocationDevice')>} */
     this.consumers = new Set();
     /** @type {Map<string, number>} key `${deviceId}::${capability}` -> last raw reading */
     this.baselines = new Map();
@@ -172,8 +172,7 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
       reads.push(...recs);
     }
 
-    // Read every needed value; if any is missing, skip this tick and keep the
-    // baselines - the sample-gap guard below will re-baseline if the outage lasts.
+    // Read every needed value; skip the tick if any value is missing.
     const current = new Map();
     try {
       for (const read of reads) {
@@ -280,9 +279,9 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
 
   /**
    * All Homey devices that expose one or more `meter_power` capabilities, with
-   * the concrete capability ids the settings UI can map to source roles. This
-   * app's own allocator devices are excluded so their synthetic output can't be
-   * wired back in as a source (which would create an allocation loop).
+   * the concrete capability ids the settings UI can map to source roles.
+   * Excludes this app's own allocator devices.
+   * @returns {Promise<{id:string, name:string, zone:?string, capabilities:{id:string, title:string}[]}[]>}
    */
   async getMeterDevices() {
     const [devices, zones] = await Promise.all([this.homeyApi.devices.getDevices(), this.homeyApi.zones.getZones().catch(() => ({}))]);
@@ -290,9 +289,6 @@ module.exports = class EnergyAllocatorApp extends Homey.App {
     const ownAppUri = `homey:app:${this.homey.manifest.id}`;
 
     for (const device of Object.values(devices)) {
-      // Never offer this app's own allocator devices as a source - selecting one
-      // would feed an allocator's synthetic output back into the allocation and
-      // create a loop.
       if (device.ownerUri === ownAppUri || String(device.driverId || '').startsWith(`${ownAppUri}:`)) continue;
 
       const meterCaps = (device.capabilities || []).filter((cap) => cap === 'meter_power' || cap.startsWith('meter_power.'));

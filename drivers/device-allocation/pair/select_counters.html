@@ -11,10 +11,7 @@
   let MODE = 'individual';
 
   function makeUid() {
-    // Makes `data` unique even when the same deviceId+capability is paired
-    // more than once, or across several counters summed into one device -
-    // allowed, since one counter can feed several allocators for different
-    // purposes.
+    // Unique id for `data`, distinguishing devices paired to the same counter.
     return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
   }
 
@@ -42,9 +39,7 @@
     for (const group of groups) {
       const title = group.zone ? `${group.name} (${group.zone})` : group.name;
 
-      // .homey-form-fieldset + .homey-form-legend renders as a proper heading
-      // (unlike .homey-form-checkbox-set-title, a muted caption) - the device
-      // name here is identifying information, not a subordinate hint.
+      // .homey-form-fieldset + .homey-form-legend renders the device name as a heading.
       const fieldset = document.createElement('fieldset');
       fieldset.className = 'homey-form-fieldset';
       fieldset.innerHTML = '<legend class="homey-form-legend"></legend>';
@@ -77,9 +72,7 @@
 
     Homey.showLoadingOverlay();
     try {
-      // Counter selection goes in `store` (mutable - `onRepair` can change it
-      // later); `data` only carries the immutable identity: `uid` and the
-      // fixed pairing `mode`.
+      // Counter selection is written to `store`; `data` carries `uid` and `mode`.
       if (MODE === 'summary') {
         const counters = checked.map((input) => ({
           deviceId: input.dataset.deviceId,

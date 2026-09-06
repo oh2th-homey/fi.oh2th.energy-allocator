@@ -20,19 +20,19 @@ Sources:
 ## Homey Compose
 
 - Edit `.homeycompose/app.json` (+ the split files below); the root `app.json` is
-  generated on every `validate` / `run` / `build` — never edit it.
+  generated on every `validate` / `run` / `build` - never edit it.
 - Capabilities: `.homeycompose/capabilities/<id>.json`.
 - App-wide flow: `.homeycompose/flow/{triggers,conditions,actions}/<id>.json`.
 - Per-driver files in `drivers/<id>/`:
-  - `driver.compose.json` — manifest (name, class, capabilities, images, pair …).
+  - `driver.compose.json` - manifest (name, class, capabilities, images, pair …).
     Folder name is the driver id; no `id` field needed.
-  - `driver.settings.compose.json` — device settings schema.
-  - `driver.flow.compose.json` — `{ "triggers": [...], "conditions": [...], "actions": [...] }`.
+  - `driver.settings.compose.json` - device settings schema.
+  - `driver.flow.compose.json` - `{ "triggers": [...], "conditions": [...], "actions": [...] }`.
     Compose auto-adds a `device` arg **and** `"filter": "driver_id=<id>"` to every
     card, so the card is scoped to that driver and shows under the device. Two
     drivers cannot both define the same card id.
-  - `pair/*.html` — custom pairing views.
-  - `assets/` — `icon.svg` + `images/{small,large,xlarge}.png`.
+  - `pair/*.html` - custom pairing views.
+  - `assets/` - `icon.svg` + `images/{small,large,xlarge}.png`.
 
 ## Icons & images
 
@@ -61,7 +61,7 @@ Sources:
   id starting `energy_`, e.g. `energy_exclude`) is **not** app-writable: the SDK
   docs reserve the `energy_` prefix for Homey itself, and calling
   `device.setSettings({ energy_exclude: true })` from device code has no effect
-  (confirmed by testing — no error, but the toggle doesn't change). There is no
+  (confirmed by testing - no error, but the toggle doesn't change). There is no
   supported API for a device to exclude itself from Homey Energy at runtime;
   `setEnergy()`/`getEnergy()` exist but only manage the `energy` object, not this
   toggle. If a device needs to be excluded, that's a manual, one-time step for
@@ -102,7 +102,7 @@ Sources:
 
 ## App API (`/api.js`) + settings page
 
-- **Routes MUST be declared in `.homeycompose/app.json` under an `"api"` object** —
+- **Routes MUST be declared in `.homeycompose/app.json` under an `"api"` object** -
   Compose does NOT auto-generate this from `api.js`, and `homey app validate`
   passes without it, but at runtime `homey app run` throws
   `api.js found but no "api" section in app.json manifest` (ManagerApi
@@ -117,7 +117,7 @@ Sources:
   ```
 
   `method` is `GET|POST|PUT|DELETE` (or an array); `path` is an explicit route
-  pattern (`/`, `/:id`, …) — it is NOT derived from the handler name. Optional
+  pattern (`/`, `/:id`, …) - it is NOT derived from the handler name. Optional
   `"public": true` disables auth for that route (use sparingly).
 
 - `/api.js` exports an **object** of async handlers, one per key in the manifest
@@ -137,7 +137,7 @@ Sources:
 - Settings page (`settings/index.html`) **must load the bridge script in `<head>`**:
   `<script type="text/javascript" src="/homey.js" data-origin="settings"></script>`.
   Without it `onHomeyReady` is never called, `Homey.ready()` never fires, and the
-  page stays stuck behind Homey's loading spinner (validates fine — runtime only).
+  page stays stuck behind Homey's loading spinner (validates fine - runtime only).
 - Settings page (`settings/index.html`): `onHomeyReady(Homey)` → `Homey.ready()`,
   then `Homey.api('GET'|'PUT'|…, '/path', body|null, (err, result) => {})`.
   `Homey.get(key, cb)` / `Homey.set(key, value, cb)` read/write ManagerSettings.
@@ -161,16 +161,16 @@ Sources:
   `[{ name, data: { …unique immutable id… } }]`. Put the monitored device id in
   `data` so the same device can't be added twice.
 
-- **Custom views**: a `pair` entry with **no `"template"` field** is custom — id
+- **Custom views**: a `pair` entry with **no `"template"` field** is custom - id
   `foo` requires `drivers/<driver>/pair/foo.html` to exist (confirmed in the
   installed CLI's manifest validator, `homey-lib/lib/App/index.js`:
   `typeof pairView.template === 'undefined'` ⇒
   `_ensureFileExistsCaseSensitive('drivers/<id>/pair/<pairView.id>.html')`).
-  There is no `"html"` manifest field and no `"template": "custom"` — omitting
+  There is no `"html"` manifest field and no `"template": "custom"` - omitting
   `template` *is* what makes it custom. Manifest fields per entry: `id`
   (required), `template`, `options`, `navigation.{prev,next}`.
 
-- **Custom view files are HTML *fragments*, not full documents** — confirmed
+- **Custom view files are HTML *fragments*, not full documents** - confirmed
   against real published apps (e.g. `lovethyresson/com.homevolt.local`,
   `shaarkys/com.xiaomi-miio`): no `<!doctype>`/`<head>`/`<body>`, no
   `onHomeyReady`/`Homey.ready()` (that handshake is settings-page-only). Just
@@ -178,9 +178,9 @@ Sources:
   (`$`) are already present when it runs.
 
 - **Homey Style Library classes** work out of the box in a custom view (no
-  stylesheet to load) — use these instead of ad-hoc CSS wherever a fit exists;
+  stylesheet to load) - use these instead of ad-hoc CSS wherever a fit exists;
   don't invent a scrollable inner box with your own `max-height`/`overflow-y`
-  for a long list either — checked several real pairing/repair views and none
+  for a long list either - checked several real pairing/repair views and none
   do this; the pairing dialog itself scrolls the whole page, with any button
   simply the last element in normal flow (no native pinned-footer-button or
   stretch-to-fill mechanism to hook into instead).
@@ -190,7 +190,7 @@ Sources:
     `.homey-form-legend` renders as a real heading (the docs call it out
     explicitly: "use a homey-form-legend to create headings between form
     elements"). `.homey-form-checkbox-set-title` / `.homey-form-radio-set-title`
-    render small and muted instead — confirmed by a user screenshot where a
+    render small and muted instead - confirmed by a user screenshot where a
     per-group device name in that class was nearly invisible. Use
     `-set-title` only for a genuinely subordinate caption above a checkbox/radio
     cluster; use `.homey-form-fieldset` + `.homey-form-legend` (checkboxes/radios
@@ -203,7 +203,7 @@ Sources:
     `-shadow-full`), `.homey-button-secondary-shadow`,
     `.homey-button-danger-shadow`, `.homey-button-transparent`, `-small`
     modifier; state classes `.is-disabled`, `.is-loading` (or plain `disabled`).
-  - Checkbox — one or more independent choices, optionally grouped:
+  - Checkbox - one or more independent choices, optionally grouped:
 
     ```html
     <fieldset class="homey-form-checkbox-set">
@@ -216,7 +216,7 @@ Sources:
     </fieldset>
     ```
 
-  - Radio — mutually exclusive choice, same shape with `-radio-` in place of
+  - Radio - mutually exclusive choice, same shape with `-radio-` in place of
     `-checkbox-` (`.homey-form-radio-set`, `.homey-form-radio-set-title`,
     `.homey-form-radio`, `.homey-form-radio-input`, `.homey-form-radio-checkmark`,
     `.homey-form-radio-text`); give every `input` in the set the same `name` so
@@ -227,13 +227,13 @@ Sources:
   resolved by the driver's `session.setHandler(event, async (data) => result)`.
   `Homey.showView(id)` / `nextView()` / `prevView()` to navigate.
   `Homey.createDevice({ name, data })` → `Promise` (creates the device directly
-  — no `add_devices` template needed from a custom view). `Homey.done()` closes
+  - no `add_devices` template needed from a custom view). `Homey.done()` closes
   pairing. `Homey.alert(msg)`, `Homey.showLoadingOverlay()` /
   `hideLoadingOverlay()`. `Homey.setViewStoreValue`/`getViewStoreValue` can pass
   data between views instead of driver-side closure state.
 
 - **Passing data between two custom pair views**: simplest is a closure variable
-  in `Driver.onPair(session)` — view 1 posts its selection via
+  in `Driver.onPair(session)` - view 1 posts its selection via
   `Homey.emit('some_event', data)` → `session.setHandler('some_event', async (data) => { this._x = data; })`;
   view 2's `session.setHandler` for its own list event reads `this._x`. Each
   `onPair(session)` call is scoped to one pairing attempt, so this doesn't leak
@@ -241,7 +241,7 @@ Sources:
 
 - **Don't draw your own "Next" button for a view that only navigates onward.**
   Homey's own pairing chrome already renders Previous/Continue from that view's
-  manifest `navigation.{prev,next}` (confirmed live in this project — drawing an
+  manifest `navigation.{prev,next}` (confirmed live in this project - drawing an
   in-page button too just duplicates it). Instead, emit the current
   selection to the driver on every `change` (checkbox/radio), not on a click you
   don't control, so whatever moment the user hits the native Continue the
@@ -250,20 +250,20 @@ Sources:
   that isn't pure navigation and has no native equivalent.
 
 - **Repair** lets a user fix an existing device's setup without deleting it.
-  Add a top-level `"repair"` array to `driver.compose.json` — same shape as
+  Add a top-level `"repair"` array to `driver.compose.json` - same shape as
   `"pair"` (`id`/`template`/`options`/`navigation`), views for a custom (no
   `template`) entry live in `drivers/<id>/repair/<id>.html` (its own folder,
-  parallel to `pair/`). Confirmed against real apps — official
+  parallel to `pair/`). Confirmed against real apps - official
   `athombv/eu.huum` (`repair` array reusing a system `template`, no custom
   file needed) and community `bhdit/homey-tapo`
   (`drivers/<id>/repair/repair.html`, a custom view). `homey app validate`
   does **not** check that a custom repair view's file exists the way it does
-  for `pair` (no such check in the installed CLI's validator) — get the path
+  for `pair` (no such check in the installed CLI's validator) - get the path
   right by hand.
   - Driver side: `async onRepair(session, device) { session.setHandler(...) }`
-    — same `session` API as `onPair`, plus you get the actual `device`
+    - same `session` API as `onPair`, plus you get the actual `device`
     instance being repaired.
-  - **`data` (immutable identity) cannot be changed by a repair** — don't try.
+  - **`data` (immutable identity) cannot be changed by a repair** - don't try.
     Persist whatever the user changes into **`store`** instead
     (`await device.setStoreValue(key, value)`), which is mutable and exactly
     what repair is for. Design a device's constructor-time `data`/`store` split
@@ -271,7 +271,7 @@ Sources:
     future repair might need to change in `store`.
   - Repaired store values take effect wherever the device's own methods read
     them live (e.g. via `getStoreValue()`/`getStore()` called fresh each time,
-    not cached at `onInit()`) — no extra wiring needed. `athombv/eu.huum`
+    not cached at `onInit()`) - no extra wiring needed. `athombv/eu.huum`
     instead re-triggers `onInit()` after the repair
     (`await device.onUninit(); await device.onInit();`) because its `onInit()`
     caches the repaired value into a connection object; skip that dance if
@@ -284,17 +284,17 @@ Sources:
 - Trigger defined in `driver.flow.compose.json`:
   `this.homey.flow.getDeviceTriggerCard('<id>').trigger(device, tokens)`.
 - Condition: `this.homey.flow.getConditionCard('<id>').registerRunListener(async (args) => …)`
-  — `args.device` is the Homey device, plus your own args.
+  - `args.device` is the Homey device, plus your own args.
 - **One device card for several drivers**: define it app-wide in
   `.homeycompose/flow/{triggers,conditions}/<id>.json` and add the `device` arg
   yourself with a multi-driver filter:
   `{ "type": "device", "name": "device", "filter": "driver_id=drvA|drvB" }`
   (`|` = OR in a filter value). Any card with a `device` arg is still a device
-  card — `getDeviceTriggerCard(id).trigger(device, tokens)` /
+  card - `getDeviceTriggerCard(id).trigger(device, tokens)` /
   `getConditionCard(id).registerRunListener(…)`. Register a condition/action run
   listener **once** app-wide (e.g. in `app.js`), not per-driver, or the second
   registration overwrites the first.
-- **Don't build a "capability above X" condition card** — numeric capabilities
+- **Don't build a "capability above X" condition card** - numeric capabilities
   are exposed as Flow tokens, so Homey's built-in Logic condition
   (`{{token}} > value`) already does it. Only add a custom condition where the
   comparison isn't a plain token check.

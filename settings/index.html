@@ -42,7 +42,7 @@
     <p class="ea-hint" data-i18n="settings.sampling.hint">
       How much the smoothed grid share must move (percentage points) before the
       "grid share changed" Flow trigger fires. Meters are sampled every 5 minutes
-      and the share is smoothed over the last 5 samples (25 min); both are fixed.
+      and the share is smoothed over the last 6 samples (30 min); both are fixed.
     </p>
     <div class="ea-numbers">
       <div class="homey-form-group">
@@ -281,6 +281,9 @@
 
     function validate(config) {
       if (!config.grid) return 'Select a grid device and its imported-energy capability.';
+      if (config.grid.exportCapability && config.grid.exportCapability === config.grid.importCapability) {
+        return 'Grid imported and exported energy capabilities must be different.';
+      }
       const batBad = config.battery.some((b) => b.chargeCapability === b.dischargeCapability);
       if (batBad) return 'Battery charge and discharge capabilities must be different.';
       return null;

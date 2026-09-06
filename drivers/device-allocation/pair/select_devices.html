@@ -17,11 +17,9 @@
 </form>
 
 <script type="text/javascript">
-  // No in-page "Next" button: this view's manifest entry has a
-  // navigation.next, so Homey's own pairing chrome renders the Continue
-  // button. Selected ids are kept current with the driver on every checkbox
-  // change instead of waiting for a click we don't control. Checked state
-  // survives re-filtering because it's tracked here, not just read from the DOM.
+  // No in-page button; the manifest's navigation.next renders Homey's
+  // Continue button. Selection is sent to the driver on every checkbox
+  // change and kept in CHECKED so it survives re-filtering.
   let DEVICES = [];
   const CHECKED = new Set();
 

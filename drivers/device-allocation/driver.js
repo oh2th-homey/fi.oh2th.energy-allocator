@@ -6,24 +6,18 @@ module.exports = class DeviceAllocationDriver extends Homey.Driver {
 
   /**
    * Three-stage custom pairing:
-   *   1. `pair/choose_mode.html` - individual devices (one allocator per
-   *      counter) or a summary device (one allocator that sums every counter).
+   *   1. `pair/choose_mode.html` - individual (one allocator per counter) or
+   *      summary (one allocator summing every counter).
    *   2. `pair/select_devices.html` - filterable checkbox list of physical
-   *      devices. Splitting device selection from counter selection keeps this
-   *      list short even with hundreds of candidate devices.
+   *      devices.
    *   3. `pair/select_counters.html` - checkbox list of the selected devices'
    *      `meter_power(.x)` counters, grouped per device; submission behaviour
-   *      depends on the chosen mode (see that file).
+   *      depends on the chosen mode.
    *
-   * A device/counter already followed by an existing allocator is **not**
-   * excluded - the same counter can be added more than once (e.g. to feed
-   * several differently-purposed allocators, or to be part of more than one
-   * summary device). Each created device gets its own `uid` in `data` so Homey
-   * treats it as distinct even when `deviceId` + `capability` repeat.
-   *
-   * The chosen counter(s) are written to `store` (mutable), not `data`
-   * (immutable) - see `onRepair` below, which changes exactly that later.
-   * `data.mode` records the pairing mode, which repair cannot change.
+   * A counter already followed by an existing allocator is not excluded and
+   * can be selected again; each created device gets its own `uid` in `data`.
+   * The chosen counter(s) are written to `store`; `data.mode` records the
+   * pairing mode.
    */
   async onPair(session) {
     let mode = 'individual';
@@ -60,16 +54,11 @@ module.exports = class DeviceAllocationDriver extends Homey.Driver {
   }
 
   /**
-   * Lets the user reselect the source device(s)/counter(s) an existing
-   * allocator follows - mirrors pairing's `select_devices` + `select_counters`
-   * (see `repair/*.html`), minus the mode question: the pairing mode is fixed
-   * for the device's lifetime and only decides whether `select_counters` shows
-   * a single-choice (individual) or multi-choice (summary) picker.
-   *
-   * This never touches the device's `meter_power.grid/.pv/.bat` capability
-   * values, so its accumulated totals are untouched by a repair - only the
-   * counter(s) `app.js` reads for it going forward change, taking effect on
-   * the very next sample tick.
+   * Lets the user reselect the counter(s) an existing allocator follows.
+   * Reuses pairing's `select_devices` + `select_counters` steps (see
+   * `repair/*.html`), without the mode question: `select_counters` renders a
+   * single-choice picker for `individual` mode, multi-choice for `summary`.
+   * Updates only `store`; leaves `meter_power.grid/.pv/.bat` untouched.
    */
   async onRepair(session, device) {
     const mode = device.getAllocationMode();

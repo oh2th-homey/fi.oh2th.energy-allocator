@@ -1,20 +1,19 @@
 'use strict';
 
 const Homey = require('homey');
-const SmoothingWindow = require('./SmoothingWindow');
-const { SAMPLE_INTERVAL_SECONDS, SMOOTHING_INTERVALS } = require('./constants');
+const SmoothingWindow = require('../lib/SmoothingWindow');
+const { SAMPLE_INTERVAL_SECONDS, SMOOTHING_INTERVALS } = require('../lib/constants');
 
 const ENERGY_CAPS = ['meter_power.total', 'meter_power.grid', 'meter_power.pv', 'meter_power.bat'];
 const SHARE_CAPS = ['measure_grid_share', 'measure_self_sufficiency'];
 
-// Grid is mandatory, so it (and the shares / reset button) are always present.
+/** Always present: grid meter, shares, and reset button. */
 const STATIC_CAPS = ['meter_power.grid', ...SHARE_CAPS, 'button.reset_meter'];
 
-// Solar / battery outputs only exist while the app config has at least one
-// source of that kind. Ordered as they should appear in the UI.
+/** Present only while the app config has at least one source of that kind. */
 const DYNAMIC_CAPS = ['meter_power.pv', 'meter_power.bat'];
 
-// Full display order, used so a re-added capability lands in a sensible slot.
+/** Capability display order. */
 const CAP_ORDER = [
   'meter_power.grid',
   'meter_power.pv',
@@ -25,11 +24,10 @@ const CAP_ORDER = [
 ];
 
 /**
- * Shared behaviour for the two allocator device types. Subclasses implement
- * {@link AllocationDevice#getMonitoredCounters}:
- *   - device-allocation returns one counter (an individual allocator) or
- *     several (a summary allocator that sums them)
- *   - house-allocation returns `[]` (it receives the whole-house split directly)
+ * Shared behaviour for the two allocator device types.
+ * Subclasses implement {@link AllocationDevice#getMonitoredCounters}:
+ *   - device-allocation: one counter, or several summed
+ *   - house-allocation: `[]`
  */
 class AllocationDevice extends Homey.Device {
 
@@ -59,10 +57,9 @@ class AllocationDevice extends Homey.Device {
   }
 
   /**
-   * Which `meter_power(.x)` counters this allocator sums to derive its own
-   * consumption delta each interval. An empty array means this allocator has
-   * no counters of its own and instead receives the whole-house split directly
-   * (house-allocation).
+   * `meter_power(.x)` counters this allocator sums to derive its own
+   * consumption delta each interval. Empty for house-allocation, which
+   * receives the whole-house split directly.
    * @returns {{deviceId:string, capability:string}[]}
    */
   getMonitoredCounters() {
@@ -70,19 +67,16 @@ class AllocationDevice extends Homey.Device {
   }
 
   /**
-   * Share-smoothing window: {@link SMOOTHING_INTERVALS} sample intervals of
-   * trailing data. Both the interval and this multiplier are fixed constants
-   * (see `lib/constants.js`), so this is not user-tunable.
+   * Share-smoothing window duration, in milliseconds.
+   * @returns {number}
    */
   _smoothingMs() {
     return SAMPLE_INTERVAL_SECONDS * SMOOTHING_INTERVALS * 1000;
   }
 
   /**
-   * Extra capability(ies) beyond the common set, always present for this
-   * concrete allocator type - not config-dependent, unlike PV/battery.
-   * `house-allocation` leaves this empty: a bare `meter_power.total` on it
-   * would double-count the very meters ΔHouse is derived from.
+   * Extra capabilities always present for this allocator type, beyond the
+   * common set in {@link STATIC_CAPS}. Empty for house-allocation.
    * @returns {string[]}
    */
   _extraStaticCaps() {
@@ -90,7 +84,7 @@ class AllocationDevice extends Homey.Device {
   }
 
   /**
-   * Which dynamic capabilities the current app config calls for.
+   * Dynamic capabilities the current app config calls for.
    * @returns {Record<string, boolean>}
    */
   _wantedDynamicCaps() {
@@ -102,10 +96,10 @@ class AllocationDevice extends Homey.Device {
   }
 
   /**
-   * Bring this device's capability set in line with the app config: static caps
-   * are always present; `meter_power.pv` / `meter_power.bat` are added when the
-   * first solar / battery source is configured and removed when the last one is
-   * deleted. Safe to call repeatedly (idempotent).
+   * Brings this device's capability set in line with the app config. Adds
+   * `meter_power.pv` / `meter_power.bat` when the first solar / battery
+   * source is configured, removes them when the last one is deleted.
+   * Idempotent.
    */
   async _syncCapabilities() {
     const wanted = this._wantedDynamicCaps();
@@ -130,18 +124,14 @@ class AllocationDevice extends Homey.Device {
     }
   }
 
-  /**
-   * Called by the app whenever the source configuration changes, so a newly
-   * added / removed solar or battery source is reflected on the device.
-   */
+  /** Called by the app when the source configuration changes. */
   async onConfigChanged() {
     await this._syncCapabilities();
   }
 
   /**
-   * Called by the app once per sampling interval with this consumer's share of
-   * the interval's energy.
-   *
+   * Called by the app once per sampling interval with this consumer's share
+   * of the interval's energy.
    * @param {{grid:number, pv:number, bat:number, total:number}} allocation
    */
   async applyAllocation({ grid, pv, bat, total }) {
@@ -170,6 +160,13 @@ class AllocationDevice extends Homey.Device {
     await this.setCapabilityValue(cap, current + amount).catch(this.error);
   }
 
+  /**
+   * Fires the `grid_share_changed` trigger when the grid share has moved
+   * past {@link EnergyAllocatorApp#getConfig}'s `shareChangeThreshold` since
+   * the last fire.
+   * @param {number} gridShare
+   * @param {number} selfSufficiency
+   */
   _maybeTriggerShareChanged(gridShare, selfSufficiency) {
     const cfg = this.homey.app.getConfig();
     const threshold = Math.max(0, cfg.shareChangeThreshold || 0);
@@ -186,6 +183,7 @@ class AllocationDevice extends Homey.Device {
       .catch(this.error);
   }
 
+  /** Resets all energy and share capabilities to zero/null and clears the smoothing window. */
   async resetMeters() {
     this.window.clear();
     this._lastTriggeredShare = null;
