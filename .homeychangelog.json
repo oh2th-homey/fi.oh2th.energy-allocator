@@ -10,5 +10,8 @@
   },
   "0.1.1": {
     "en": "Fine tune app settings page"
+  },
+  "0.2.0": {
+    "en": "Cleanup documentation. Fine tune functionality"
   }
 }
