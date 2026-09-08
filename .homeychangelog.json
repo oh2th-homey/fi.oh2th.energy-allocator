@@ -16,5 +16,8 @@
   },
   "0.2.1": {
     "en": "ADD: Insights for measure_grid_share and measure_self_sufficiency"
+  },
+  "1.0.0": {
+    "en": "First public release."
   }
 }
