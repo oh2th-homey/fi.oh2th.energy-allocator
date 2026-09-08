@@ -68,6 +68,56 @@
           "en": "Energy allocation changed"
         },
         "hint": {
+          "en": "Trigger when the device's grid, solar, battery, or total energy counters change."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=device-allocation|house-allocation"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "grid_energy",
+            "type": "number",
+            "title": {
+              "en": "Grid energy"
+            },
+            "example": 12.34
+          },
+          {
+            "name": "pv_energy",
+            "type": "number",
+            "title": {
+              "en": "Solar energy"
+            },
+            "example": 5.67
+          },
+          {
+            "name": "bat_energy",
+            "type": "number",
+            "title": {
+              "en": "Battery energy"
+            },
+            "example": 1.23
+          },
+          {
+            "name": "total_energy",
+            "type": "number",
+            "title": {
+              "en": "Total energy"
+            },
+            "example": 19.24
+          }
+        ],
+        "id": "energy_allocation_changed"
+      },
+      {
+        "title": {
+          "en": "Energy share changed"
+        },
+        "hint": {
           "en": "Trigger when the energy share changes by more than the configured number of percentage points."
         },
         "args": [

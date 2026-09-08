@@ -35,9 +35,9 @@ If a meter looks reset, the numbers don't add up, or Homey or the app restarts m
 
 Each device shows:
 
-- Its **grid**, **solar**, and **battery** energy (kWh), plus a **total** (Device Energy Allocation only).
+- Its **grid**, **solar**, and **battery** energy (kWh), plus a **total** (Device Energy Allocation only). The battery figure is just energy that left the battery; its original grid/solar mix isn't tracked here.
 - **Grid allocation** and **Self-sufficiency** (%) - what share of a device's energy over the last 30 minutes came from the grid versus from solar and/or the battery. Self-sufficiency is just 100% minus Grid allocation; both are smoothed over that window so they don't jump around.
-- An **"Energy allocation changed"** Flow trigger.
+- **"Energy share changed"** and **"Energy allocation changed"** Flow triggers.
 - A **"Reset allocation meters"** maintenance action (in the device's menu) to set its counters back to zero.
 - **Repair** (also in the device's menu) to change which meter(s) it follows without losing its totals.
 

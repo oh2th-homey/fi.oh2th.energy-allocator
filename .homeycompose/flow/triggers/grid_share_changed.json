@@ -1,6 +1,6 @@
 {
   "title": {
-    "en": "Energy allocation changed"
+    "en": "Energy share changed"
   },
   "hint": {
     "en": "Trigger when the energy share changes by more than the configured number of percentage points."

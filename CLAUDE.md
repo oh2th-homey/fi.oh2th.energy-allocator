@@ -282,6 +282,14 @@ with a `device` arg is), accessed via `getDeviceTriggerCard`.
   fires when the smoothed grid share moves more than `shareChangeThreshold` points
   since last fire; tokens `grid_share`, `self_sufficiency`. Fired per device from
   `lib/AllocationDevice._maybeTriggerShareChanged()`.
+- `.homeycompose/flow/triggers/energy_allocation_changed.json` - **energy
+  allocation changed**: fires every interval that added energy to at least one
+  of a device's `meter_power` counters; tokens `grid_energy`, `pv_energy`,
+  `bat_energy`, `total_energy` (each named after its capability's title),
+  carrying the device's current cumulative values. A capability the device
+  doesn't have (`total_energy` on house-allocation, `pv_energy` / `bat_energy`
+  when not configured) reports 0. Fired per device from
+  `lib/AllocationDevice._maybeTriggerEnergyAllocationChanged()`.
 
 No custom **condition** card: the `measure_grid_share` / `measure_self_sufficiency`
 capabilities are exposed as tokens, so Homey's standard Logic condition card

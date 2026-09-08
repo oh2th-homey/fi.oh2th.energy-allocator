@@ -39,8 +39,9 @@ class AllocationDevice extends Homey.Device {
 
     this.registerCapabilityListener('button.reset_meter', async () => this.resetMeters());
 
-    // App-wide device trigger card, shared by both allocator drivers.
+    // App-wide device trigger cards, shared by both allocator drivers.
     this._shareChangedTrigger = this.homey.flow.getDeviceTriggerCard('grid_share_changed');
+    this._energyChangedTrigger = this.homey.flow.getDeviceTriggerCard('energy_allocation_changed');
 
     this.homey.app.registerConsumer(this);
     this.setAvailable().catch(this.error);
@@ -140,6 +141,8 @@ class AllocationDevice extends Homey.Device {
     await this._bump('meter_power.pv', pv);
     await this._bump('meter_power.bat', bat);
 
+    this._maybeTriggerEnergyAllocationChanged(grid, pv, bat, total);
+
     this.window.add({ grid, pv, bat, total });
 
     const shares = this.window.shares();
@@ -180,6 +183,32 @@ class AllocationDevice extends Homey.Device {
     if (!this._shareChangedTrigger) return;
     this._shareChangedTrigger
       .trigger(this, { grid_share: gridShare, self_sufficiency: selfSufficiency })
+      .catch(this.error);
+  }
+
+  /**
+   * Fires the `energy_allocation_changed` trigger whenever this interval
+   * added energy to at least one of the grid/pv/bat/total counters, with the
+   * device's current cumulative values as tokens. Capabilities this device
+   * doesn't have (`meter_power.total` on house-allocation, `meter_power.pv`
+   * / `.bat` when not configured) report 0.
+   * @param {number} grid
+   * @param {number} pv
+   * @param {number} bat
+   * @param {number} total
+   */
+  _maybeTriggerEnergyAllocationChanged(grid, pv, bat, total) {
+    if (!this._energyChangedTrigger) return;
+    if (!(grid > 0 || pv > 0 || bat > 0 || total > 0)) return;
+
+    const value = (cap) => (this.hasCapability(cap) ? this.getCapabilityValue(cap) || 0 : 0);
+    this._energyChangedTrigger
+      .trigger(this, {
+        grid_energy: value('meter_power.grid'),
+        pv_energy: value('meter_power.pv'),
+        bat_energy: value('meter_power.bat'),
+        total_energy: value('meter_power.total'),
+      })
       .catch(this.error);
   }
 
