@@ -10,7 +10,7 @@ To do this, it needs permission to manage other devices, so it can read their en
 
 Every 5 minutes, the app reads your grid, solar, and battery meters, plus the meters of the devices you're following, and splits each device's usage the same way the house's energy balances:
 
-    solar + grid import + battery discharge = house use + grid export + battery charge
+`solar + grid import + battery discharge = house use + grid export + battery charge`
 
 If a meter looks reset, the numbers don't add up, or Homey or the app restarts mid-interval, that reading is skipped rather than guessed. Cumulative totals can then lag very slightly behind reality, but the Grid allocation / Self-sufficiency percentages aren't affected, since they're smoothed and self-correcting.
 
