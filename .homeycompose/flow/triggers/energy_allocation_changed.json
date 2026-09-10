@@ -12,6 +12,7 @@
       "filter": "driver_id=device-allocation|house-allocation"
     }
   ],
+  "highlight": true,
   "tokens": [
     {
       "name": "grid_energy",
