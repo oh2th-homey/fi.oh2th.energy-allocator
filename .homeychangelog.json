@@ -19,5 +19,8 @@
   },
   "1.0.0": {
     "en": "First public release."
+  },
+  "1.0.1": {
+    "en": "Highlight the app's flow cards to make it easier to find them."
   }
 }
