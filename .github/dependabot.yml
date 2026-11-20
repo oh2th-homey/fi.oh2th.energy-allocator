@@ -1,0 +1,10 @@
+# Pull requests for new homey-api versions, the app's runtime dependency. Dev tools are held back on purpose, and
+# oh2th-homey-helpers is installed from a git tag, which is bumped by hand.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    allow:
+      - dependency-name: homey-api
